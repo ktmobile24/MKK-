@@ -1,548 +1,1010 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKK Investment Tracker — Self-contained Index</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        h1 { font-size: 24px; }
-        p { max-width: 800px; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin: 10px 0; }
-        a { text-decoration: none; color: #0066cc; }
-        a:hover { text-decoration: underline; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
-        code { font-family: Consolas, monospace; font-size: 14px; }
-        .download-section { margin-top: 20px; }
-    </style>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
 </head>
 <body>
-    <h1>MKK Investment Tracker — Self-contained Index</h1>
-    <p>This page contains all code files for the app with one-click download links. Save this file as <code>index.html</code> and open it locally; each link below will download the exact file contents.</p>
-    <ul>
-        <li><a href="#start-script">Start MKK Investment Tracker.command</a></li>
-        <li><a href="#tracker-app">tracker_app.py</a></li>
-        <li><a href="#portfolio-data">portfolio_data.json</a></li>
-        <li><a href="#readme">README.txt</a></li>
-        <li><a href="#build-dmg">build_mkk_dmg.sh</a></li>
-    </ul>
-    <p class="download-section"><a href="data:text/html;charset=utf-8,<!DOCTYPE html>%0A<html lang='en'>%0A<head>%0A    <meta charset='UTF-8'>%0A    <meta name='viewport' content='width=device-width, initial-scale=1.0'>%0A    <title>MKK Investment Tracker — Self-contained Index</title>%0A    <style>%0A        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }%0A        h1 { font-size: 24px; }%0A        p { max-width: 800px; }%0A        ul { list-style-type: none; padding: 0; }%0A        li { margin: 10px 0; }%0A        a { text-decoration: none; color: #0066cc; }%0A        a:hover { text-decoration: underline; }%0A        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }%0A        code { font-family: Consolas, monospace; font-size: 14px; }%0A        .download-section { margin-top: 20px; }%0A    </style>%0A</head>%0A<body>%0A    <h1>MKK Investment Tracker — Self-contained Index</h1>%0A    <p>This page contains all code files for the app with one-click download links. Save this file as <code>index.html</code> and open it locally; each link below will download the exact file contents.</p>%0A    <ul>%0A        <li><a href='#start-script'>Start MKK Investment Tracker.command</a></li>%0A        <li><a href='#tracker-app'>tracker_app.py</a></li>%0A        <li><a href='#portfolio-data'>portfolio_data.json</a></li>%0A        <li><a href='#readme'>README.txt</a></li>%0A        <li><a href='#build-dmg'>build_mkk_dmg.sh</a></li>%0A    </ul>%0A    <p class='download-section'><a href='#' onclick='downloadIndex()'>Download index</a></p>%0A    <script>%0A        function downloadIndex() {%0A            let element = document.createElement('a');%0A            element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(document.documentElement.outerHTML));%0A            element.setAttribute('download', 'index.html');%0A            element.style.display = 'none';%0A            document.body.appendChild(element);%0A            element.click();%0A            document.body.removeChild(element);%0A        }%0A    </script>%0A%0A    <h2 id='start-script'>Start MKK Investment Tracker.command</h2>%0A    <p><a href='data:text/plain;charset=utf-8,#!/bin/bash%0Aset -e%0Acd %22$(dirname %22$0%22)%22%0Aif [ ! -d %22.venv%22 ]; then%0A  /usr/bin/python3 -m venv .venv%0A  source .venv/bin/activate%0A  python -m pip install --upgrade pip%0A  pip install streamlit yfinance pandas numpy altair pydeck watchdog tornado packaging requests pytz%0Aelse%0A  source .venv/bin/activate%0Afi%0Aexec streamlit run %22tracker_app.py%22' download='Start MKK Investment Tracker.command'>Download Start MKK Investment Tracker.command</a></p>%0A    <pre><code>#!/bin/bash
-set -e
-cd "$(dirname "$0")"
-if [ ! -d ".venv" ]; then
-  /usr/bin/python3 -m venv .venv
-  source .venv/bin/activate
-  python -m pip install --upgrade pip
-  pip install streamlit yfinance pandas numpy altair pydeck watchdog tornado packaging requests pytz
-else
-  source .venv/bin/activate
-fi
-exec streamlit run "tracker_app.py"
-</code></pre>%0A%0A    <h2 id='tracker-app'>tracker_app.py</h2>%0A    <p><a href='data:text/x-python;charset=utf-8,%23 MKK Investment Tracker — v1.8.8%0A%23 - Portfolio: color-coded Overall Return $ & %, subtle row striping%0A%23 - Top metrics: colored Overall Return "card" (green/red)%0A%23 - True ADA: color-coded Return vs True ADA %, striping%0A%23 - Keeps delete holding, dividend last amount/date, migration, backup%0A%0Aimport json, os, re, shutil, sys%0Afrom datetime import datetime, date%0Afrom typing import Dict, Any%0Aimport streamlit as st, yfinance as yf, pandas as pd, numpy as np%0A%0AAPP_NAME = "MKK Investment Tracker"%0Ast.set_page_config(page_title=APP_NAME, page_icon="💠", layout="wide")%0A%0Adef _data_path()->str:%0A    if sys.platform == "darwin":%0A        base = os.path.expanduser("~/Library/Application Support/MKK Investment Tracker")%0A    else:%0A        base = os.path.join(os.path.expanduser("~"), ".mkk_investment_tracker")%0A    os.makedirs(base, exist_ok=True)%0A    newp = os.path.join(base, "portfolio_data.json")%0A    for candidate in ["portfolio_data.json", os.path.join(os.path.dirname(__file__), "portfolio_data.json")]:%0A        if not os.path.exists(newp) and os.path.exists(candidate):%0A            try: shutil.copy2(candidate, newp)%0A            except Exception: pass%0A    return newp%0A%0ADATA_FILE = _data_path()%0A%0Adef load_data() -> Dict[str, Any]:%0A    if not os.path.exists(DATA_FILE):%0A        return {"holdings": {}, "cash_uninvested": 0.0,%0A                "settings": {"currency":"USD","auto_price": True},%0A                "last_prices": {}, "last_updated": None, "version":"1.8.8"}%0A    with open(DATA_FILE,"r",encoding="utf-8") as f:%0A        d = json.load(f)%0A    d.setdefault("settings", {})%0A    d["settings"].setdefault("currency","USD")%0A    d["settings"].setdefault("auto_price", True)%0A    d.setdefault("last_prices", {}); d.setdefault("last_updated", None)%0A    d.setdefault("cash_uninvested", 0.0); d["version"]="1.8.8"%0A    for rec in d.get("holdings", {}).values():%0A        rec.setdefault("purchase_price", None)%0A        rec.setdefault("dividends_collected", 0.0)%0A        rec.setdefault("last_div_amount", 0.0)%0A        rec.setdefault("last_div_date", "")%0A        rec.setdefault("summary","")%0A    return d%0A%0Adef save_data(data: Dict[str, Any]) -> None:%0A    with open(DATA_FILE,"w",encoding="utf-8") as f: json.dump(data,f,indent=2)%0A%0ADATA = load_data()%0A%0Adef money_to_float(text:str)->float:%0A    if text is None: return 0.0%0A    s=str(text).strip().replace(',','').replace('$','')%0A    try: return float(s) if s else 0.0%0A    except: return 0.0%0A%0Adef money_str(x:float)->str:%0A    if x is None or not np.isfinite(x): return ""%0A    return f"${x:,.2f}"%0A%0Adef money_input(label:str,key:str,value:float=0.0,help:str="")->float:%0A    st.write(label)%0A    default = money_str(value)%0A    txt = st.text_input(label="", value=default, key=key, help=help, label_visibility="collapsed", placeholder="$0.00")%0A    return money_to_float(txt)%0A%0Adef shares_to_float(text: str) -> float:%0A    if text is None: return 0.0%0A    s = str(text).strip().replace(',', ' ').replace('\\u00a0',' ').strip()%0A    s = re.sub(r'\\s+', '', s)%0A    try: return float(s) if s else 0.0%0A    except: return 0.0%0A%0Adef shares_input(label: str, key: str, value: float = 0.0, help: str = "", placeholder: str = "0.000000") -> float:%0A    st.write(label)%0A    txt = st.text_input(label="", value=f"{value:.6f}" if value else "", key=key, help=help,%0A                        label_visibility="collapsed", placeholder=placeholder)%0A    return shares_to_float(txt)%0A%0A@st.cache_data(show_spinner=False)%0Adef fetch_price(ticker:str)->float:%0A    try:%0A        t=yf.Ticker(ticker); hist=t.history(period="5d", interval="1d")%0A        if hist is None or hist.empty: return float("nan")%0A        return float(hist["Close"].dropna().iloc[-1])%0A    except Exception: return float("nan")%0A%0A@st.cache_data(show_spinner=False)%0Adef fetch_name_and_summary(ticker:str):%0A    try:%0A        tk=yf.Ticker(ticker); info=tk.info or {}%0A        name=info.get("longName") or info.get("shortName") or info.get("symbol") or ticker%0A        summary=info.get("longBusinessSummary") or info.get("description") or ""%0A        if summary: summary=(summary[:500]+"…") if len(summary)>500 else summary%0A        return name, summary%0A    except Exception: return ticker, ""%0A%0A@st.cache_data(show_spinner=False)%0Adef fetch_dividend_frequency(ticker: str) -> str:%0A    try:%0A        t = yf.Ticker(ticker)%0A        div = t.dividends%0A        if div is None or len(div) < 3: return "Irregular/None"%0A        dates = pd.to_datetime(div.index).sort_values()%0A        cutoff = pd.Timestamp.utcnow() - pd.Timedelta(days=3*365)%0A        dates = dates[dates >= cutoff]%0A        if len(dates) < 3: return "Irregular/None"%0A        diffs = (dates[1:] - dates[:-1]).days.values%0A        if len(diffs) == 0: return "Irregular/None"%0A        med = float(np.median(diffs))%0A        if med <= 9: return "Weekly"%0A        if med <= 45: return "Monthly"%0A        if med <= 115: return "Quarterly"%0A        if med <= 220: return "Semiannual"%0A        if med <= 400: return "Annual"%0A        return "Irregular/None"%0A    except Exception:%0A        return "Irregular/None"%0A%0Awith st.sidebar:%0A    st.subheader("Settings")%0A    DATA["settings"]["currency"] = st.selectbox("Currency (display only)", ["USD","EUR","GBP","JPY","CAD"],%0A                                                index=["USD","EUR","GBP","JPY","CAD"].index(DATA["settings"].get("currency","USD")))%0A    DATA["settings"]["auto_price"] = st.checkbox("Auto-update prices from the internet",%0A                                                 value=DATA["settings"].get("auto_price", True))%0A    if st.button("🔄 Update all prices now"):%0A        updated = 0%0A        for tkr, rec in DATA["holdings"].items():%0A            p = fetch_price(tkr)%0A            if np.isfinite(p):%0A                DATA["last_prices"][tkr] = p; updated += 1%0A        DATA["last_updated"] = datetime.now().isoformat(timespec="seconds"); save_data(DATA)%0A        st.success(f"Updated {updated} tickers.")%0A    if st.button("💾 Save data"):%0A        save_data(DATA); st.success("Saved.")%0A%0Ast.title("MKK Investment Tracker")%0Atab_port, tab_add, tab_edit, tab_div, tab_trueada, tab_migrate, tab_backup = st.tabs(%0A    ["Portfolio","Add Holding","Edit Holdings","Dividends","True ADA","Migration","Backup"]%0A)%0A%0A# ---------------------- Portfolio ----------------------%0Awith tab_port:%0A    if not DATA["holdings"]:%0A        st.info("No holdings yet. Add your first position in **Add Holding**.")%0A    else:%0A        rows=[]; total_invested=0.0; total_value=0.0; total_div=0.0%0A        for tkr, rec in sorted(DATA["holdings"].items()):%0A            shares=float(rec.get("shares",0)); invested=float(rec.get("total_invested",0))%0A            price = fetch_price(tkr) if DATA["settings"].get("auto_price", True) else float('nan')%0A            if np.isnan(price): price=float(DATA["last_prices"].get(tkr,np.nan))%0A            market_value = shares*price if np.isfinite(price) else np.nan%0A            divs=float(rec.get("dividends_collected",0.0))%0A            overall_return = (market_value - invested if np.isfinite(market_value) else 0.0) + divs%0A            ret_pct = (overall_return / invested * 100.0) if invested>0 else np.nan%0A            payout = fetch_dividend_frequency(tkr)%0A            true_ada = ((invested - divs)/shares) if shares>0 else np.nan%0A%0A            rows.append({%0A                "Ticker": tkr,%0A                "Name": rec.get("name",""),%0A                "Payout Freq": payout,%0A                "Shares": round(shares,6),%0A                "Purchase Price": rec.get("purchase_price", np.nan),%0A                "Total Invested": invested,%0A                "Price Now": price if np.isfinite(price) else np.nan,%0A                "Current Value": market_value if np.isfinite(market_value) else np.nan,%0A                "Dividends Collected": divs,%0A                "True ADA": true_ada,%0A                "Overall Return $": overall_return if np.isfinite(overall_return) else np.nan,%0A                "Overall Return %": ret_pct if np.isfinite(ret_pct) else np.nan%0A            })%0A%0A            if np.isfinite(market_value): total_value += market_value%0A            total_invested += invested; total_div += divs%0A%0A        order = ["Ticker","Name","Payout Freq","Shares","Purchase Price","Total Invested","Price Now","Current Value","Dividends Collected","True ADA","Overall Return $","Overall Return %"]%0A        df = (pd.DataFrame(rows))[order]%0A%0A        # Format + color + subtle striping%0A        money_cols=["Purchase Price","Total Invested","Price Now","Current Value","Dividends Collected","True ADA","Overall Return $"]%0A        pct_cols=["Overall Return %"]%0A%0A        def fmt_money(v): return "" if pd.isna(v) else f"${float(v):,.2f}"%0A        def fmt_pct(v): return "" if pd.isna(v) else f"{float(v):,.2f}%"%0A        def color_returns(v):%0A            try: x=float(v)%0A            except Exception: return ""%0A            if not np.isfinite(x): return ""%0A            if x > 0: return "color:#16a34a;"   # green-600%0A            if x < 0: return "color:#dc2626;"   # red-600%0A            return ""%0A        stripe_css = [{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}]%0A%0A        styler = (df.style%0A                    .format({**{c: fmt_money for c in money_cols}, **{c: fmt_pct for c in pct_cols}})%0A                    .applymap(color_returns, subset=["Overall Return $","Overall Return %"])%0A                    .set_properties(subset=money_cols+pct_cols, **{"text-align":"right"})%0A                    .set_table_styles(stripe_css)%0A                 )%0A%0A        # Show without index/number column%0A        try:%0A            st.dataframe(styler, use_container_width=True, height=620, hide_index=True)%0A        except TypeError:%0A            try:%0A                st.dataframe(styler.hide(axis="index"), use_container_width=True, height=620)%0A            except Exception:%0A                df_display = df.copy()%0A                for c in money_cols: df_display[c]=df_display[c].apply(fmt_money)%0A                for c in pct_cols: df_display[c]=df_display[c].apply(fmt_pct)%0A                st.dataframe(df_display, use_container_width=True, height=620)%0A%0A        # Metrics (with colored Overall Return value)%0A        cash=float(DATA.get("cash_uninvested",0.0))%0A        overall=(total_value-total_invested)+total_div%0A        overall_pct=(overall/total_invested*100.0) if total_invested>0 else np.nan%0A        total_value_incl_cash=total_value+cash%0A%0A        c1,c2,c3,c4,c5=st.columns(5)%0A        c1.metric("Total Invested", money_str(total_invested))%0A        c2.metric("Current Value (Holdings)", money_str(total_value))%0A        c3.metric("Cash Available", money_str(cash))%0A        c4.metric("Total Value (incl. Cash)", money_str(total_value_incl_cash))%0A%0A        # Custom colored card for Overall Return value text%0A        color = "#16a34a" if (np.isfinite(overall) and overall>0) else ("#dc2626" if (np.isfinite(overall) and overall<0) else "#374151")%0A        pct_txt = (f"{overall_pct:.2f}%" if np.isfinite(overall_pct) else "—")%0A        c5.markdown(f"""%0A<div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;">%0A  <div style="font-size:12px;color:#6b7280;">Overall Return</div>%0A  <div style="font-size:22px;font-weight:700;color:{color};">{money_str(overall)}</div>%0A  <div style="font-size:12px;color:#6b7280;">{pct_txt}</div>%0A</div>%0A""", unsafe_allow_html=True)%0A%0A        st.markdown("---")%0A        st.subheader("Cash Available")%0A        new_cash = money_input("Cash Available", key="cash_available_main", value=float(DATA.get("cash_uninvested",0.0)),%0A                               help="This is included in Total Value (incl. Cash).")%0A        if st.button("Save Cash Available"):%0A            DATA["cash_uninvested"] = float(new_cash); save_data(DATA); st.success("Cash Available saved.")%0A%0A        if DATA.get("last_updated"): st.caption(f"Last price update: {DATA['last_updated']}")%0A%0A        st.markdown("---"); st.subheader("Ticker Summaries")%0A        for tkr, rec in sorted(DATA["holdings"].items()):%0A            with st.expander(f"{tkr} — {rec.get('name','')}"):%0A                summary=rec.get("summary","")%0A                if not summary:%0A                    nm, sm = fetch_name_and_summary(tkr)%0A                    if not rec.get("name"): rec["name"]=nm%0A                    rec["summary"]=sm; save_data(DATA); summary=sm%0A                if summary: st.write(summary)%0A                payout=fetch_dividend_frequency(tkr); st.markdown(f"- **Dividend Payout Frequency:** {payout}")%0A%0A# ---------------------- Add Holding ----------------------%0Awith tab_add:%0A    st.subheader("Add a Holding")%0A    with st.form("add_form", clear_on_submit=True):%0A        col1, col2 = st.columns(2)%0A        ticker = col1.text_input("Ticker", placeholder="AAPL").strip().upper()%0A        name = col2.text_input("Name (auto-fills if blank)", placeholder="Apple Inc.").strip()%0A        shares = shares_input("Shares purchased", key="add_shares", help="Supports up to 6 decimals (e.g., 100.391000).")%0A        purchase_price = money_input("Purchase price per share ($, optional)", key="add_purchase_price", value=0.0)%0A        total_invested = money_input("Total invested", key="add_total_invested", value=0.0, help="Include fees/commissions if applicable.")%0A        dividends = money_input("Dividends collected so far", key="add_dividends", value=0.0)%0A        submitted = st.form_submit_button("Add Holding")%0A    if submitted:%0A        if not ticker or shares <= 0 or total_invested <= 0:%0A            st.error("Please enter at least Ticker, Shares > 0, and Total invested > 0.")%0A        else:%0A            auto_name, auto_summary = fetch_name_and_summary(ticker) if not name else (name, "")%0A            if ticker in DATA["holdings"]: st.warning("Ticker already exists. Use Edit tab to modify existing holding.")%0A            else:%0A                DATA["holdings"][ticker]={%0A                    "name":auto_name, "shares":float(shares), "total_invested":float(total_invested),%0A                    "purchase_price": float(purchase_price) if purchase_price>0 else None,%0A                    "dividends_collected": float(dividends), "summary": auto_summary,%0A                    "last_div_amount": 0.0, "last_div_date": "",%0A                    "created": datetime.now().isoformat(timespec="seconds")%0A                }%0A                save_data(DATA); st.success(f"Added {ticker} — {auto_name}")%0A%0A# ---------------------- Edit Holdings ----------------------%0Awith tab_edit:%0A    st.subheader("Edit / Update Holdings")%0A    if not DATA["holdings"]:%0A        st.info("Nothing to edit yet.")%0A    else:%0A        all_tickers=sorted(list(DATA["holdings"].keys()))%0A        sel=st.selectbox("Select ticker", options=all_tickers)%0A        rec=DATA["holdings"][sel]%0A        with st.form("edit_form"):%0A            name=st.text_input("Name", value=rec.get("name",""))%0A            shares=shares_input("Shares", key=f"edit_shares_{sel}", value=float(rec.get("shares",0)), help="Supports up to 6 decimals.")%0A            total_invested=money_input("Total invested", key=f"edit_total_invested_{sel}", value=float(rec.get("total_invested",0)))%0A            purchase_price=money_input("Purchase price per share ($, optional)", key=f"edit_purchase_price_{sel}", value=float(rec.get("purchase_price") or 0.0))%0A            dividends=money_input("Dividends collected so far", key=f"edit_div_{sel}", value=float(rec.get("dividends_collected",0.0)))%0A            summary=st.text_area("Summary (auto-fetched; you can edit)", value=rec.get("summary",""), height=120)%0A            save_btn=st.form_submit_button("Save changes")%0A        if save_btn:%0A            DATA["holdings"][sel]={**rec,"name":name,"shares":float(shares),"total_invested":float(total_invested),%0A                                   "purchase_price": float(purchase_price) if purchase_price>0 else None,%0A                                   "dividends_collected": float(dividends),"summary":summary,%0A                                   "updated": datetime.now().isoformat(timespec="seconds")}%0A            save_data(DATA); st.success(f"Updated {sel}.")%0A        with st.expander("🗑️ Delete Holding"):%0A            st.caption("This permanently removes the selected holding from your portfolio data.")%0A            col_a, col_b = st.columns([1,1])%0A            confirm = col_a.checkbox(f"Yes, delete {sel}")%0A            if col_b.button("Delete Holding", disabled=not confirm, type="secondary"):%0A                try:%0A                    del DATA["holdings"][sel]%0A                    save_data(DATA)%0A                    st.success(f"Deleted {sel}. Refreshing…")%0A                    st.rerun()%0A                except KeyError:%0A                    st.error("Ticker not found.")%0A%0A# ---------------------- Dividends ----------------------%0Awith tab_div:%0A    st.subheader("Quick Dividend Entry (with last amount & date)")%0A    if not DATA["holdings"]:%0A        st.info("Add a holding first.")%0A    else:%0A        tickers=sorted(list(DATA["holdings"].keys()))%0A        col1,col2,col3,col4=st.columns([1,1,1,1])%0A        sel=col1.selectbox("Ticker", options=tickers)%0A        dflt_date = date.today()%0A        dt = col2.date_input("Dividend date", value=dflt_date, key=f"div_date_{sel}")%0A        amt = col3.text_input("Dividend amount to add", value="$0.00", key=f"div_amt_{sel}")%0A        def _money_to_float(s):%0A            s = str(s).strip().replace(',', '').replace('$','')%0A            try: return float(s) if s else 0.0%0A            except: return 0.0%0A        if col4.button("Add dividend"):%0A            add_val = _money_to_float(amt)%0A            DATA["holdings"][sel]["dividends_collected"] = float(DATA["holdings"][sel].get("dividends_collected",0.0)) + add_val%0A            DATA["holdings"][sel]["last_div_amount"] = add_val%0A            try:%0A                DATA["holdings"][sel]["last_div_date"] = dt.isoformat()%0A            except Exception:%0A                DATA["holdings"][sel]["last_div_date"] = str(dt)%0A            save_data(DATA); st.success(f"Added {money_str(add_val)} dividend to {sel} for {dt}.")%0A%0A        rows=[]; total=0.0%0A        for tkr, rec in sorted(DATA["holdings"].items()):%0A            d=float(rec.get("dividends_collected",0.0))%0A            last_amt=float(rec.get("last_div_amount",0.0))%0A            last_dt=rec.get("last_div_date","")%0A            rows.append({"Ticker":tkr,%0A                         "Dividends Collected": d,%0A                         "Last Dividend $": last_amt,%0A                         "Last Dividend Date": last_dt})%0A            total+=d%0A        df_div=pd.DataFrame(rows).reset_index(drop=True)%0A        df_div["Dividends Collected"]=df_div["Dividends Collected"].apply(lambda v: f"${float(v):,.2f}")%0A        df_div["Last Dividend $"]=df_div["Last Dividend $"].apply(lambda v: f"${float(v):,.2f}" if v else "")%0A        try:%0A            st.dataframe(df_div.style.set_table_styles([{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}]), use_container_width=True, height=360, hide_index=True)%0A        except TypeError:%0A            try:%0A                st.dataframe(df_div.style.hide(axis="index").set_table_styles([{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}]), use_container_width=True, height=360)%0A            except Exception:%0A                st.dataframe(df_div, use_container_width=True, height=360)%0A        st.metric("Total Dividends Collected", money_str(total))%0A%0A# ---------------------- True ADA ----------------------%0Awith tab_trueada:%0A    st.subheader("True Adjusted Dividend Average (True ADA)")%0A    if not DATA["holdings"]:%0A        st.info("Add a holding first to calculate True ADA.")%0A    else:%0A        rows=[]; sum_shares=0.0; sum_invested=0.0; sum_div=0.0%0A        for tkr, rec in sorted(DATA["holdings"].items()):%0A            shares=float(rec.get("shares",0.0))%0A            invested=float(rec.get("total_invested",0.0))%0A            divs=float(rec.get("dividends_collected",0.0))%0A            true_ada = (invested - divs)/shares if shares>0 else np.nan%0A            price = fetch_price(tkr) if DATA["settings"].get("auto_price", True) else float('nan')%0A            if np.isnan(price): price=float(DATA["last_prices"].get(tkr, np.nan))%0A            vs_true_pct = ((price - true_ada)/true_ada*100.0) if (shares>0 and np.isfinite(price) and np.isfinite(true_ada) and true_ada!=0) else np.nan%0A            rows.append({%0A                "Ticker": tkr,%0A                "Shares": round(shares,6),%0A                "Total Invested": invested,%0A                "Dividends Collected": divs,%0A                "True ADA": true_ada,%0A                "Current Price": price if np.isfinite(price) else np.nan,%0A                "Return vs True ADA %": vs_true_pct%0A            })%0A            sum_shares += shares; sum_invested += invested; sum_div += divs%0A%0A        df = pd.DataFrame(rows)%0A        df_display = df.copy()%0A        for c in ["Total Invested","Dividends Collected","True ADA","Current Price"]:%0A            df_display[c]=df_display[c].apply(lambda v: "" if pd.isna(v) else f"${float(v):,.2f}")%0A        def fmt_pct(v): return "" if pd.isna(v) else f"{float(v):,.2f}%"%0A        df_display["Return vs True ADA %"]=df_display["Return vs True ADA %"].apply(fmt_pct)%0A%0A        def color_pct(v):%0A            try: x=float(str(v).replace('%',''))%0A            except: return ""%0A            if not np.isfinite(x): return ""%0A            if x > 0: return "color:#16a34a;"%0A            if x < 0: return "color:#dc2626;"%0A            return ""%0A%0A        try:%0A            sty = (df_display.style%0A                    .applymap(color_pct, subset=["Return vs True ADA %"])%0A                    .set_properties(subset=["Total Invested","Dividends Collected","True ADA","Current Price","Return vs True ADA %"], **{"text-align":"right"})%0A                    .set_table_styles([{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}])%0A                 )%0A            st.dataframe(sty, use_container_width=True, height=520, hide_index=True)%0A        except TypeError:%0A            try:%0A                st.dataframe(sty.hide(axis="index"), use_container_width=True, height=520)%0A            except Exception:%0A                st.dataframe(df_display, use_container_width=True, height=520)%0A%0A        if sum_shares > 0:%0A            avg_cost_portfolio = (sum_invested / sum_shares)%0A            true_ada_portfolio = ((sum_invested - sum_div) / sum_shares)%0A            improvement_pct = ((avg_cost_portfolio - true_ada_portfolio) / avg_cost_portfolio * 100.0) if avg_cost_portfolio>0 else np.nan%0A        else:%0A            avg_cost_portfolio = np.nan%0A            true_ada_portfolio = np.nan%0A            improvement_pct = np.nan%0A%0A        c1, c2, c3, c4 = st.columns(4)%0A        c1.metric("Total Dividends Collected", f"${sum_div:,.2f}")%0A        c2.metric("Unadjusted Avg Cost (Portfolio)", f"${avg_cost_portfolio:,.2f}" if np.isfinite(avg_cost_portfolio) else "—")%0A        c3.metric("True ADA (Portfolio)", f"${true_ada_portfolio:,.2f}" if np.isfinite(true_ada_portfolio) else "—")%0A        c4.metric("Adjusted Basis Improvement", f"{improvement_pct:.2f}%" if np.isfinite(improvement_pct) else "—")%0A%0A# ---------------------- Migration ----------------------%0Awith tab_migrate:%0A    st.subheader("Migrate from older version")%0A    st.caption("Import/merge a previous `portfolio_data.json` without losing your data.")%0A    upl=st.file_uploader("Choose previous JSON file", type=["json"])%0A    merge_mode=st.radio("Merge strategy", ["Add new tickers only","Overwrite existing tickers with incoming data"])%0A    if upl is not None and st.button("Merge now"):%0A        try:%0A            incoming=json.load(upl); inc_holdings=incoming.get("holdings",{}); added=0; updated=0%0A            for tkr, rec in inc_holdings.items():%0A                rec.setdefault("last_div_amount", 0.0)%0A                rec.setdefault("last_div_date", "")%0A                if tkr not in DATA["holdings"]: DATA["holdings"][tkr]=rec; added+=1%0A                else:%0A                    if merge_mode.startswith("Overwrite"): DATA["holdings"][tkr]=rec; updated+=1%0A            save_data(DATA); st.success(f"Merged successfully. Added: {added}, Updated: {updated}.")%0A        except Exception as e: st.error(f"Failed to merge: {e}")%0A%0A# ---------------------- Backup ----------------------%0Awith tab_backup:%0A    st.subheader("Backup & Restore")%0A    with open(DATA_FILE,"rb") as f:%0A        st.download_button("⬇️ Download backup (JSON)", data=f, file_name=f"portfolio_backup_%s.json" % datetime.now().strftime('%Y%m%d_%H%M%S'), mime="application/json")%0A    upl=st.file_uploader("Restore from JSON backup", type=["json"])%0A    if upl is not None and st.button("Restore now"):%0A        try:%0A            DATA=json.load(upl)%0A            for rec in DATA.get("holdings", {}).values():%0A                rec.setdefault("last_div_amount", 0.0)%0A                rec.setdefault("last_div_date", "")%0A            save_data(DATA); st.success("Backup restored."); st.rerun()%0A        except Exception as e: st.error(f"Failed to restore: {e}")%0A' download='tracker_app.py'>Download tracker_app.py</a></p>%0A    <pre><code># MKK Investment Tracker — v1.8.8
-# - Portfolio: color-coded Overall Return $ & %, subtle row striping
-# - Top metrics: colored Overall Return "card" (green/red)
-# - True ADA: color-coded Return vs True ADA %, striping
-# - Keeps delete holding, dividend last amount/date, migration, backup
-
-import json, os, re, shutil, sys
-from datetime import datetime, date
-from typing import Dict, Any
-import streamlit as st, yfinance as yf, pandas as pd, numpy as np
-
-APP_NAME = "MKK Investment Tracker"
-st.set_page_config(page_title=APP_NAME, page_icon="💠", layout="wide")
-
-def _data_path()->str:
-    if sys.platform == "darwin":
-        base = os.path.expanduser("~/Library/Application Support/MKK Investment Tracker")
-    else:
-        base = os.path.join(os.path.expanduser("~"), ".mkk_investment_tracker")
-    os.makedirs(base, exist_ok=True)
-    newp = os.path.join(base, "portfolio_data.json")
-    for candidate in ["portfolio_data.json", os.path.join(os.path.dirname(__file__), "portfolio_data.json")]:
-        if not os.path.exists(newp) and os.path.exists(candidate):
-            try: shutil.copy2(candidate, newp)
-            except Exception: pass
-    return newp
-
-DATA_FILE = _data_path()
-
-def load_data() -> Dict[str, Any]:
-    if not os.path.exists(DATA_FILE):
-        return {"holdings": {}, "cash_uninvested": 0.0,
-                "settings": {"currency":"USD","auto_price": True},
-                "last_prices": {}, "last_updated": None, "version":"1.8.8"}
-    with open(DATA_FILE,"r",encoding="utf-8") as f:
-        d = json.load(f)
-    d.setdefault("settings", {})
-    d["settings"].setdefault("currency","USD")
-    d["settings"].setdefault("auto_price", True)
-    d.setdefault("last_prices", {}); d.setdefault("last_updated", None)
-    d.setdefault("cash_uninvested", 0.0); d["version"]="1.8.8"
-    for rec in d.get("holdings", {}).values():
-        rec.setdefault("purchase_price", None)
-        rec.setdefault("dividends_collected", 0.0)
-        rec.setdefault("last_div_amount", 0.0)
-        rec.setdefault("last_div_date", "")
-        rec.setdefault("summary","")
-    return d
-
-def save_data(data: Dict[str, Any]) -> None:
-    with open(DATA_FILE,"w",encoding="utf-8") as f: json.dump(data,f,indent=2)
-
-DATA = load_data()
-
-def money_to_float(text:str)->float:
-    if text is None: return 0.0
-    s=str(text).strip().replace(',','').replace('$','')
-    try: return float(s) if s else 0.0
-    except: return 0.0
-
-def money_str(x:float)->str:
-    if x is None or not np.isfinite(x): return ""
-    return f"${x:,.2f}"
-
-def money_input(label:str,key:str,value:float=0.0,help:str="")->float:
-    st.write(label)
-    default = money_str(value)
-    txt = st.text_input(label="", value=default, key=key, help=help, label_visibility="collapsed", placeholder="$0.00")
-    return money_to_float(txt)
-
-def shares_to_float(text: str) -> float:
-    if text is None: return 0.0
-    s = str(text).strip().replace(',', ' ').replace('\\u00a0',' ').strip()
-    s = re.sub(r'\\s+', '', s)
-    try: return float(s) if s else 0.0
-    except: return 0.0
-
-def shares_input(label: str, key: str, value: float = 0.0, help: str = "", placeholder: str = "0.000000") -> float:
-    st.write(label)
-    txt = st.text_input(label="", value=f"{value:.6f}" if value else "", key=key, help=help,
-                        label_visibility="collapsed", placeholder=placeholder)
-    return shares_to_float(txt)
-
-@st.cache_data(show_spinner=False)
-def fetch_price(ticker:str)->float:
-    try:
-        t=yf.Ticker(ticker); hist=t.history(period="5d", interval="1d")
-        if hist is None or hist.empty: return float("nan")
-        return float(hist["Close"].dropna().iloc[-1])
-    except Exception: return float("nan")
-
-@st.cache_data(show_spinner=False)
-def fetch_name_and_summary(ticker:str):
-    try:
-        tk=yf.Ticker(ticker); info=tk.info or {}
-        name=info.get("longName") or info.get("shortName") or info.get("symbol") or ticker
-        summary=info.get("longBusinessSummary") or info.get("description") or ""
-        if summary: summary=(summary[:500]+"…") if len(summary)>500 else summary
-        return name, summary
-    except Exception: return ticker, ""
-
-@st.cache_data(show_spinner=False)
-def fetch_dividend_frequency(ticker: str) -> str:
-    try:
-        t = yf.Ticker(ticker)
-        div = t.dividends
-        if div is None or len(div) < 3: return "Irregular/None"
-        dates = pd.to_datetime(div.index).sort_values()
-        cutoff = pd.Timestamp.utcnow() - pd.Timedelta(days=3*365)
-        dates = dates[dates >= cutoff]
-        if len(dates) < 3: return "Irregular/None"
-        diffs = (dates[1:] - dates[:-1]).days.values
-        if len(diffs) == 0: return "Irregular/None"
-        med = float(np.median(diffs))
-        if med <= 9: return "Weekly"
-        if med <= 45: return "Monthly"
-        if med <= 115: return "Quarterly"
-        if med <= 220: return "Semiannual"
-        if med <= 400: return "Annual"
-        return "Irregular/None"
-    except Exception:
-        return "Irregular/None"
-
-with st.sidebar:
-    st.subheader("Settings")
-    DATA["settings"]["currency"] = st.selectbox("Currency (display only)", ["USD","EUR","GBP","JPY","CAD"],
-                                                index=["USD","EUR","GBP","JPY","CAD"].index(DATA["settings"].get("currency","USD")))
-    DATA["settings"]["auto_price"] = st.checkbox("Auto-update prices from the internet",
-                                                 value=DATA["settings"].get("auto_price", True))
-    if st.button("🔄 Update all prices now"):
-        updated = 0
-        for tkr, rec in DATA["holdings"].items():
-            p = fetch_price(tkr)
-            if np.isfinite(p):
-                DATA["last_prices"][tkr] = p; updated += 1
-        DATA["last_updated"] = datetime.now().isoformat(timespec="seconds"); save_data(DATA)
-        st.success(f"Updated {updated} tickers.")
-    if st.button("💾 Save data"):
-        save_data(DATA); st.success("Saved.")
-
-st.title("MKK Investment Tracker")
-tab_port, tab_add, tab_edit, tab_div, tab_trueada, tab_migrate, tab_backup = st.tabs(
-    ["Portfolio","Add Holding","Edit Holdings","Dividends","True ADA","Migration","Backup"]
-)
-
-# ---------------------- Portfolio ----------------------
-with tab_port:
-    if not DATA["holdings"]:
-        st.info("No holdings yet. Add your first position in **Add Holding**.")
-    else:
-        rows=[]; total_invested=0.0; total_value=0.0; total_div=0.0
-        for tkr, rec in sorted(DATA["holdings"].items()):
-            shares=float(rec.get("shares",0)); invested=float(rec.get("total_invested",0))
-            price = fetch_price(tkr) if DATA["settings"].get("auto_price", True) else float('nan')
-            if np.isnan(price): price=float(DATA["last_prices"].get(tkr,np.nan))
-            market_value = shares*price if np.isfinite(price) else np.nan
-            divs=float(rec.get("dividends_collected",0.0))
-            overall_return = (market_value - invested if np.isfinite(market_value) else 0.0) + divs
-            ret_pct = (overall_return / invested * 100.0) if invested>0 else np.nan
-            payout = fetch_dividend_frequency(tkr)
-            true_ada = ((invested - divs)/shares) if shares>0 else np.nan
-
-            rows.append({
-                "Ticker": tkr,
-                "Name": rec.get("name",""),
-                "Payout Freq": payout,
-                "Shares": round(shares,6),
-                "Purchase Price": rec.get("purchase_price", np.nan),
-                "Total Invested": invested,
-                "Price Now": price if np.isfinite(price) else np.nan,
-                "Current Value": market_value if np.isfinite(market_value) else np.nan,
-                "Dividends Collected": divs,
-                "True ADA": true_ada,
-                "Overall Return $": overall_return if np.isfinite(overall_return) else np.nan,
-                "Overall Return %": ret_pct if np.isfinite(ret_pct) else np.nan
-            })
-
-            if np.isfinite(market_value): total_value += market_value
-            total_invested += invested; total_div += divs
-
-        order = ["Ticker","Name","Payout Freq","Shares","Purchase Price","Total Invested","Price Now","Current Value","Dividends Collected","True ADA","Overall Return $","Overall Return %"]
-        df = (pd.DataFrame(rows))[order]
-
-        # Format + color + subtle striping
-        money_cols=["Purchase Price","Total Invested","Price Now","Current Value","Dividends Collected","True ADA","Overall Return $"]
-        pct_cols=["Overall Return %"]
-
-        def fmt_money(v): return "" if pd.isna(v) else f"${float(v):,.2f}"
-        def fmt_pct(v): return "" if pd.isna(v) else f"{float(v):,.2f}%"
-        def color_returns(v):
-            try: x=float(v)
-            except Exception: return ""
-            if not np.isfinite(x): return ""
-            if x > 0: return "color:#16a34a;"   # green-600
-            if x < 0: return "color:#dc2626;"   # red-600
-            return ""
-        stripe_css = [{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}]
-
-        styler = (df.style
-                    .format({**{c: fmt_money for c in money_cols}, **{c: fmt_pct for c in pct_cols}})
-                    .applymap(color_returns, subset=["Overall Return $","Overall Return %"])
-                    .set_properties(subset=money_cols+pct_cols, **{"text-align":"right"})
-                    .set_table_styles(stripe_css)
-                 )
-
-        # Show without index/number column
-        try:
-            st.dataframe(styler, use_container_width=True, height=620, hide_index=True)
-        except TypeError:
-            try:
-                st.dataframe(styler.hide(axis="index"), use_container_width=True, height=620)
-            except Exception:
-                df_display = df.copy()
-                for c in money_cols: df_display[c]=df_display[c].apply(fmt_money)
-                for c in pct_cols: df_display[c]=df_display[c].apply(fmt_pct)
-                st.dataframe(df_display, use_container_width=True, height=620)
-
-        # Metrics (with colored Overall Return value)
-        cash=float(DATA.get("cash_uninvested",0.0))
-        overall=(total_value-total_invested)+total_div
-        overall_pct=(overall/total_invested*100.0) if total_invested>0 else np.nan
-        total_value_incl_cash=total_value+cash
-
-        c1,c2,c3,c4,c5=st.columns(5)
-        c1.metric("Total Invested", money_str(total_invested))
-        c2.metric("Current Value (Holdings)", money_str(total_value))
-        c3.metric("Cash Available", money_str(cash))
-        c4.metric("Total Value (incl. Cash)", money_str(total_value_incl_cash))
-
-        # Custom colored card for Overall Return value text
-        color = "#16a34a" if (np.isfinite(overall) and overall>0) else ("#dc2626" if (np.isfinite(overall) and overall<0) else "#374151")
-        pct_txt = (f"{overall_pct:.2f}%" if np.isfinite(overall_pct) else "—")
-        c5.markdown(f"""
-<div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;">
-  <div style="font-size:12px;color:#6b7280;">Overall Return</div>
-  <div style="font-size:22px;font-weight:700;color:{color};">{money_str(overall)}</div>
-  <div style="font-size:12px;color:#6b7280;">{pct_txt}</div>
-</div>
-""", unsafe_allow_html=True)
-
-        st.markdown("---")
-        st.subheader("Cash Available")
-        new_cash = money_input("Cash Available", key="cash_available_main", value=float(DATA.get("cash_uninvested",0.0)),
-                               help="This is included in Total Value (incl. Cash).")
-        if st.button("Save Cash Available"):
-            DATA["cash_uninvested"] = float(new_cash); save_data(DATA); st.success("Cash Available saved.")
-
-        if DATA.get("last_updated"): st.caption(f"Last price update: {DATA['last_updated']}")
-
-        st.markdown("---"); st.subheader("Ticker Summaries")
-        for tkr, rec in sorted(DATA["holdings"].items()):
-            with st.expander(f"{tkr} — {rec.get('name','')}"):
-                summary=rec.get("summary","")
-                if not summary:
-                    nm, sm = fetch_name_and_summary(tkr)
-                    if not rec.get("name"): rec["name"]=nm
-                    rec["summary"]=sm; save_data(DATA); summary=sm
-                if summary: st.write(summary)
-                payout=fetch_dividend_frequency(tkr); st.markdown(f"- **Dividend Payout Frequency:** {payout}")
-
-# ---------------------- Add Holding ----------------------
-with tab_add:
-    st.subheader("Add a Holding")
-    with st.form("add_form", clear_on_submit=True):
-        col1, col2 = st.columns(2)
-        ticker = col1.text_input("Ticker", placeholder="AAPL").strip().upper()
-        name = col2.text_input("Name (auto-fills if blank)", placeholder="Apple Inc.").strip()
-        shares = shares_input("Shares purchased", key="add_shares", help="Supports up to 6 decimals (e.g., 100.391000).")
-        purchase_price = money_input("Purchase price per share ($, optional)", key="add_purchase_price", value=0.0)
-        total_invested = money_input("Total invested", key="add_total_invested", value=0.0, help="Include fees/commissions if applicable.")
-        dividends = money_input("Dividends collected so far", key="add_dividends", value=0.0)
-        submitted = st.form_submit_button("Add Holding")
-    if submitted:
-        if not ticker or shares <= 0 or total_invested <= 0:
-            st.error("Please enter at least Ticker, Shares > 0, and Total invested > 0.")
-        else:
-            auto_name, auto_summary = fetch_name_and_summary(ticker) if not name else (name, "")
-            if ticker in DATA["holdings"]: st.warning("Ticker already exists. Use Edit tab to modify existing holding.")
-            else:
-                DATA["holdings"][ticker]={
-                    "name":auto_name, "shares":float(shares), "total_invested":float(total_invested),
-                    "purchase_price": float(purchase_price) if purchase_price>0 else None,
-                    "dividends_collected": float(dividends), "summary": auto_summary,
-                    "last_div_amount": 0.0, "last_div_date": "",
-                    "created": datetime.now().isoformat(timespec="seconds")
-                }
-                save_data(DATA); st.success(f"Added {ticker} — {auto_name}")
-
-# ---------------------- Edit Holdings ----------------------
-with tab_edit:
-    st.subheader("Edit / Update Holdings")
-    if not DATA["holdings"]:
-        st.info("Nothing to edit yet.")
-    else:
-        all_tickers=sorted(list(DATA["holdings"].keys()))
-        sel=st.selectbox("Select ticker", options=all_tickers)
-        rec=DATA["holdings"][sel]
-        with st.form("edit_form"):
-            name=st.text_input("Name", value=rec.get("name",""))
-            shares=shares_input("Shares", key=f"edit_shares_{sel}", value=float(rec.get("shares",0)), help="Supports up to 6 decimals.")
-            total_invested=money_input("Total invested", key=f"edit_total_invested_{sel}", value=float(rec.get("total_invested",0)))
-            purchase_price=money_input("Purchase price per share ($, optional)", key=f"edit_purchase_price_{sel}", value=float(rec.get("purchase_price") or 0.0))
-            dividends=money_input("Dividends collected so far", key=f"edit_div_{sel}", value=float(rec.get("dividends_collected",0.0)))
-            summary=st.text_area("Summary (auto-fetched; you can edit)", value=rec.get("summary",""), height=120)
-            save_btn=st.form_submit_button("Save changes")
-        if save_btn:
-            DATA["holdings"][sel]={**rec,"name":name,"shares":float(shares),"total_invested":float(total_invested),
-                                   "purchase_price": float(purchase_price) if purchase_price>0 else None,
-                                   "dividends_collected": float(dividends),"summary":summary,
-                                   "updated": datetime.now().isoformat(timespec="seconds")}
-            save_data(DATA); st.success(f"Updated {sel}.")
-        with st.expander("🗑️ Delete Holding"):
-            st.caption("This permanently removes the selected holding from your portfolio data.")
-            col_a, col_b = st.columns([1,1])
-            confirm = col_a.checkbox(f"Yes, delete {sel}")
-            if col_b.button("Delete Holding", disabled=not confirm, type="secondary"):
-                try:
-                    del DATA["holdings"][sel]
-                    save_data(DATA)
-                    st.success(f"Deleted {sel}. Refreshing…")
-                    st.rerun()
-                except KeyError:
-                    st.error("Ticker not found.")
-
-# ---------------------- Dividends ----------------------
-with tab_div:
-    st.subheader("Quick Dividend Entry (with last amount & date)")
-    if not DATA["holdings"]:
-        st.info("Add a holding first.")
-    else:
-        tickers=sorted(list(DATA["holdings"].keys()))
-        col1,col2,col3,col4=st.columns([1,1,1,1])
-        sel=col1.selectbox("Ticker", options=tickers)
-        dflt_date = date.today()
-        dt = col2.date_input("Dividend date", value=dflt_date, key=f"div_date_{sel}")
-        amt = col3.text_input("Dividend amount to add", value="$0.00", key=f"div_amt_{sel}")
-        def _money_to_float(s):
-            s = str(s).strip().replace(',', '').replace('$','')
-            try: return float(s) if s else 0.0
-            except: return 0.0
-        if col4.button("Add dividend"):
-            add_val = _money_to_float(amt)
-            DATA["holdings"][sel]["dividends_collected"] = float(DATA["holdings"][sel].get("dividends_collected",0.0)) + add_val
-            DATA["holdings"][sel]["last_div_amount"] = add_val
-            try:
-                DATA["holdings"][sel]["last_div_date"] = dt.isoformat()
-            except Exception:
-                DATA["holdings"][sel]["last_div_date"] = str(dt)
-            save_data(DATA); st.success(f"Added {money_str(add_val)} dividend to {sel} for {dt}.")
-
-        rows=[]; total=0.0
-        for tkr, rec in sorted(DATA["holdings"].items()):
-            d=float(rec.get("dividends_collected",0.0))
-            last_amt=float(rec.get("last_div_amount",0.0))
-            last_dt=rec.get("last_div_date","")
-            rows.append({"Ticker":tkr,
-                         "Dividends Collected": d,
-                         "Last Dividend $": last_amt,
-                         "Last Dividend Date": last_dt})
-            total+=d
-        df_div=pd.DataFrame(rows).reset_index(drop=True)
-        df_div["Dividends Collected"]=df_div["Dividends Collected"].apply(lambda v: f"${float(v):,.2f}")
-        df_div["Last Dividend $"]=df_div["Last Dividend $"].apply(lambda v: f"${float(v):,.2f}" if v else "")
-        try:
-            st.dataframe(df_div.style.set_table_styles([{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}]), use_container_width=True, height=360, hide_index=True)
-        except TypeError:
-            try:
-                st.dataframe(df_div.style.hide(axis="index").set_table_styles([{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}]), use_container_width=True, height=360)
-            except Exception:
-                st.dataframe(df_div, use_container_width=True, height=360)
-        st.metric("Total Dividends Collected", money_str(total))
-
-# ---------------------- True ADA ----------------------
-with tab_trueada:
-    st.subheader("True Adjusted Dividend Average (True ADA)")
-    if not DATA["holdings"]:
-        st.info("Add a holding first to calculate True ADA.")
-    else:
-        rows=[]; sum_shares=0.0; sum_invested=0.0; sum_div=0.0
-        for tkr, rec in sorted(DATA["holdings"].items()):
-            shares=float(rec.get("shares",0.0))
-            invested=float(rec.get("total_invested",0.0))
-            divs=float(rec.get("dividends_collected",0.0))
-            true_ada = (invested - divs)/shares if shares>0 else np.nan
-            price = fetch_price(tkr) if DATA["settings"].get("auto_price", True) else float('nan')
-            if np.isnan(price): price=float(DATA["last_prices"].get(tkr, np.nan))
-            vs_true_pct = ((price - true_ada)/true_ada*100.0) if (shares>0 and np.isfinite(price) and np.isfinite(true_ada) and true_ada!=0) else np.nan
-            rows.append({
-                "Ticker": tkr,
-                "Shares": round(shares,6),
-                "Total Invested": invested,
-                "Dividends Collected": divs,
-                "True ADA": true_ada,
-                "Current Price": price if np.isfinite(price) else np.nan,
-                "Return vs True ADA %": vs_true_pct
-            })
-            sum_shares += shares; sum_invested += invested; sum_div += divs
-
-        df = pd.DataFrame(rows)
-        df_display = df.copy()
-        for c in ["Total Invested","Dividends Collected","True ADA","Current Price"]:
-            df_display[c]=df_display[c].apply(lambda v: "" if pd.isna(v) else f"${float(v):,.2f}")
-        def fmt_pct(v): return "" if pd.isna(v) else f"{float(v):,.2f}%"
-        df_display["Return vs True ADA %"]=df_display["Return vs True ADA %"].apply(fmt_pct)
-
-        def color_pct(v):
-            try: x=float(str(v).replace('%',''))
-            except: return ""
-            if not np.isfinite(x): return ""
-            if x > 0: return "color:#16a34a;"
-            if x < 0: return "color:#dc2626;"
-            return ""
-
-        try:
-            sty = (df_display.style
-                    .applymap(color_pct, subset=["Return vs True ADA %"])
-                    .set_properties(subset=["Total Invested","Dividends Collected","True ADA","Current Price","Return vs True ADA %"], **{"text-align":"right"})
-                    .set_table_styles([{'selector':'tbody tr:nth-child(odd)','props':'background-color: rgba(0,0,0,0.03);'}])
-                 )
-            st.dataframe(sty, use_container_width=True, height=520, hide_index=True)
-        except TypeError:
-            try:
-                st.dataframe(sty.hide(axis="index"), use_container_width=True, height=520)
-            except Exception:
-                st.dataframe(df_display, use_container_width=True, height=520)
-
-        if sum_shares > 0:
-            avg_cost_portfolio = (sum_invested / sum_shares)
-            true_ada_portfolio = ((sum_invested - sum_div) / sum_shares)
-            improvement_pct = ((avg_cost_portfolio - true_ada_portfolio) / avg_cost_portfolio * 100.0) if avg_cost_portfolio>0 else np.nan
-        else:
-            avg_cost_portfolio = np.nan
-            true_ada_portfolio = np.nan
-            improvement_pct = np.nan
-
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Total Dividends Collected", f"${sum_div:,.2f}")
-        c2.metric("Unadjusted Avg Cost (Portfolio)", f"${avg_cost_portfolio:,.2f}" if np.isfinite(avg_cost_portfolio) else "—")
-        c3.metric("True ADA (Portfolio)", f"${true_ada_portfolio:,.2f}" if np.isfinite(true_ada_portfolio) else "—")
-        c4.metric("Adjusted Basis Improvement", f"{improvement_pct:.2f}%" if np.isfinite(improvement_pct) else "—")
-
-# ---------------------- Migration ----------------------
-with tab_migrate:
-    st.subheader("Migrate from older version")
-    st.caption("Import/merge a previous `portfolio_data.json` without losing your data.")
-    upl=st.file_uploader("Choose previous JSON file", type=["json"])
-    merge_mode=st.radio("Merge strategy", ["Add new tickers only","Overwrite existing tickers with incoming data"])
-    if upl is not None and st.button("Merge now"):
-        try:
-            incoming=json.load(upl); inc_holdings=incoming.get("holdings",{}); added=0; updated=0
-            for tkr, rec in inc_holdings.items():
-                rec.setdefault("last_div_amount", 0.0)
-                rec.setdefault("last_div_date", "")
-                if tkr not in DATA["holdings"]: DATA["holdings"][tkr]=rec; added+=1
-                else:
-                    if merge_mode.startswith("Overwrite"): DATA["holdings"][tkr]=rec; updated+=1
-            save_data(DATA); st.success(f"Merged successfully. Added: {added}, Updated: {updated}.")
-        except Exception as e: st.error(f"Failed to merge: {e}")
-
-# ---------------------- Backup ----------------------
-with tab_backup:
-    st.subheader("Backup & Restore")
-    with open(DATA_FILE,"rb") as f:
-        st.download_button("⬇️ Download backup (JSON)", data=f, file_name=f"portfolio_backup_%s.json" % datetime.now().strftime('%Y%m%d_%H%M%S'), mime="application/json")
-    upl=st.file_uploader("Restore from JSON backup", type=["json"])
-    if upl is not None and st.button("Restore now"):
-        try:
-            DATA=json.load(upl)
-            for rec in DATA.get("holdings", {}).values():
-                rec.setdefault("last_div_amount", 0.0)
-                rec.setdefault("last_div_date", "")
-            save_data(DATA); st.success("Backup restored."); st.rerun()
-        except Exception as e: st.error(f"Failed to restore: {e}")
-</code></pre>%0A%0A    <h2 id='portfolio-data'>portfolio_data.json</h2>%0A    <p><a href='data:application/json;charset=utf-8,{%0A  "holdings": {},%0A  "cash_uninvested": 0.0,%0A  "settings": {%0A    "currency": "USD",%0A    "auto_price": true%0A  },%0A  "last_prices": {},%0A  "last_updated": null,%0A  "version": "1.8.8"%0A}' download='portfolio_data.json'>Download portfolio_data.json</a></p>%0A    <pre><code>{
-  "holdings": {},
-  "cash_uninvested": 0.0,
-  "settings": {
-    "currency": "USD",
-    "auto_price": true
-  },
-  "last_prices": {},
-  "last_updated": null,
-  "version": "1.8.8"
-}
-</code></pre>%0A%0A    <h2 id='readme'>README.txt</h2>%0A    <p><a href='data:text/plain;charset=utf-8,MKK Investment Tracker v1.8.8 — Color-coded returns & striping' download='README.txt'>Download README.txt</a></p>%0A    <pre><code>MKK Investment Tracker v1.8.8 — Color-coded returns & striping
-</code></pre>%0A%0A    <h2 id='build-dmg'>build_mkk_dmg.sh</h2>%0A    <p><a href='data:text/x-shellscript;charset=utf-8,#!/bin/bash%0Aset -euo pipefail%0AAPP_NAME="MKK Investment Tracker"%0ABUNDLE_ID="com.mkk.investmenttracker"%0AVERSION="${1:-1.8.9}"%0Aif ! command -v platypus >/dev/null 2>&1; then%0A  echo "Platypus not found. Installing via Homebrew..."%0A  if ! command -v brew >/dev/null 2>&1; then%0A    echo "Homebrew is required. Install from https://brew.sh and re-run."%0A    exit 1%0A  fi%0A  brew install --cask platypus%0Afi%0Aif ! command -v hdiutil >/dev/null 2>&1; then%0A  echo "hdiutil not found; must run on macOS."; exit 1%0Afi%0AICON_PNG="icon.png"%0Aif [ ! -f "$ICON_PNG" ]; then echo "icon.png missing"; exit 1; fi%0Aecho "Generating icon.icns..."%0Arm -rf icon.iconset icon.icns%0Amkdir icon.iconset%0Asips -z 16 16     "$ICON_PNG" --out icon.iconset/icon_16x16.png >/dev/null%0Asips -z 32 32     "$ICON_PNG" --out icon.iconset/icon_16x16@2x.png >/dev/null%0Asips -z 32 32     "$ICON_PNG" --out icon.iconset/icon_32x32.png >/dev/null%0Asips -z 64 64     "$ICON_PNG" --out icon.iconset/icon_32x32@2x.png >/dev/null%0Asips -z 128 128   "$ICON_PNG" --out icon.iconset/icon_128x128.png >/dev/null%0Asips -z 256 256   "$ICON_PNG" --out icon.iconset/icon_128x128@2x.png >/dev/null%0Asips -z 256 256   "$ICON_PNG" --out icon.iconset/icon_256x256.png >/dev/null%0Asips -z 512 512   "$ICON_PNG" --out icon.iconset/icon_256x256@2x.png >/dev/null%0Asips -z 512 512   "$ICON_PNG" --out icon.iconset/icon_512x512.png >/dev/null%0Acp "$ICON_PNG" icon.iconset/icon_512x512@2x.png%0Aiconutil -c icns icon.iconset -o icon.icns%0Achmod +x "MKK_Payload/Start MKK Investment Tracker.command"%0AAPP_BUNDLE="${APP_NAME}.app"%0Arm -rf "$APP_BUNDLE"%0Aplatypus -y   -a "$APP_NAME"   -o "None"   -p "/bin/bash"   -V "$VERSION"   -I "$BUNDLE_ID"   -i icon.icns   -f "MKK_Payload/tracker_app.py"   -f "MKK_Payload/portfolio_data.json"   -f "MKK_Payload/README.txt"   -R "MKK_Payload/Start MKK Investment Tracker.command"   "MKK_Payload/Start MKK Investment Tracker.command"   "$APP_BUNDLE"%0ADMG_NAME="${APP_NAME// /_}_${VERSION}.dmg"%0Arm -f "$DMG_NAME"%0AWORKDIR="$(mktemp -d)"%0Amkdir -p "$WORKDIR/mount"%0Acp -R "$APP_BUNDLE" "$WORKDIR/mount/"%0Aln -s /Applications "$WORKDIR/mount/Applications"%0Ahdiutil create "$DMG_NAME" -volname "$APP_NAME" -srcfolder "$WORKDIR/mount" -ov -format UDZO >/dev/null%0Arm -rf "$WORKDIR"%0Aecho "DMG created: $DMG_NAME"' download='build_mkk_dmg.sh'>Download build_mkk_dmg.sh</a></p>%0A    <pre><code>#!/bin/bash
-set -euo pipefail
-APP_NAME="MKK Investment Tracker"
-BUNDLE_ID="com.mkk.investmenttracker"
-VERSION="${1:-1.8.9}"
-if ! command -v platypus >/dev/null 2>&1; then
-  echo "Platypus not found. Installing via Homebrew..."
-  if ! command -v brew >/dev/null 2>&1; then
-    echo "Homebrew is required. Install from https://brew.sh and re-run."
-    exit 1
-  fi
-  brew install --cask platypus
-fi
-if ! command -v hdiutil >/dev/null 2>&1; then
-  echo "hdiutil not found; must run on macOS."; exit 1
-fi
-ICON_PNG="icon.png"
-if [ ! -f "$ICON_PNG" ]; then echo "icon.png missing"; exit 1; fi
-echo "Generating icon.icns..."
-rm -rf icon.iconset icon.icns
-mkdir icon.iconset
-sips -z 16 16     "$ICON_PNG"
+<p class="p1">&lt;!doctype html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="utf-8" /&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width,initial-scale=1" /&gt;</p>
+<p class="p1">&lt;title&gt;MKK Investment Tracker — Code Bundle (index.html)&lt;/title&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>:root{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--bg:#0f172a;--card:#111827;--soft:#0b1220;--text:#e5e7eb;--muted:#9ca3af;--line:#1f2937;--accent:#60a5fa</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>*{box-sizing:border-box}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>header{display:flex;align-items:center;gap:14px;padding:16px 22px;background:linear-gradient(90deg,#0b1220,#111827,#0b1220);border-bottom:1px solid var(--line)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1{margin:0;font-size:22px;letter-spacing:.3px;background:linear-gradient(180deg,#e5e7eb,#94a3b8,#e5e7eb);-webkit-background-clip:text;background-clip:text;color:transparent}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>main{max-width:1100px;margin:0 auto;padding:20px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 8px 22px rgba(0,0,0,.28)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.files{display:grid;gap:14px;margin-top:16px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.file{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.file header{display:flex;justify-content:space-between;align-items:center;background:var(--soft);border-bottom:1px solid var(--line);padding:10px 12px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.file h2{font-size:14px;margin:0;color:#e5e7eb}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.btn{appearance:none;border:1px solid #334155;background:#1f2937;color:#e5e7eb;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.btn:hover{background:#263042}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.code{max-height:480px;overflow:auto;padding:0;margin:0;background:#0b1220}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pre{margin:0}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>code{display:block;padding:14px;color:#e5e7eb;white-space:pre;line-height:1.45}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.muted{color:var(--muted)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.top-actions{display:flex;gap:10px;margin-top:10px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.badge{display:inline-block;padding:3px 8px;border:1px solid #334155;border-radius:999px;background:#121a2d;font-size:12px;color:#cbd5e1}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1">&lt;header&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h1&gt;MKK Investment Tracker — Embedded Code (save-as index.html)&lt;/h1&gt;</p>
+<p class="p1">&lt;/header&gt;</p>
+<p class="p1">&lt;main&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="card"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p&gt;This page contains all code as plain text. Click the &lt;b&gt;Download&lt;/b&gt; buttons to save each file, or copy directly from the code blocks.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="top-actions"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" onclick="downloadAll()"&gt;⬇️ Download all files&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="badge"&gt;App version: 1.8.9c&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="files" id="files"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;/main&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">/* ---------- File contents (edit as needed) ---------- */</p>
+<p class="p2"><br></p>
+<p class="p1">const FILES = [</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "tracker_app.py",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/x-python",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`# MKK Investment Tracker — Streamlit App (v1.8.9c)</p>
+<p class="p2"><br></p>
+<p class="p1">import json, os, sys, shutil</p>
+<p class="p1">from datetime import datetime, date</p>
+<p class="p1">from typing import Dict, Any</p>
+<p class="p1">import streamlit as st, yfinance as yf, pandas as pd, numpy as np</p>
+<p class="p2"><br></p>
+<p class="p1">APP_NAME = "MKK Investment Tracker"</p>
+<p class="p1">APP_VERSION = "1.8.9c"</p>
+<p class="p1">st.set_page_config(page_title=f"{APP_NAME} {APP_VERSION}", page_icon="💠", layout="wide")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---------------- Data management ----------------</p>
+<p class="p1">def running_in_cloud() -&gt; bool:</p>
+<p class="p1"><span class="Apple-converted-space">    </span># Streamlit Cloud sets env keys; this is a light heuristic</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return bool(os.environ.get("STREAMLIT_RUNTIME"))</p>
+<p class="p2"><br></p>
+<p class="p1">def _data_path() -&gt; str:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>"""Choose a data path that works on Mac and Streamlit Cloud."""</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if running_in_cloud():</p>
+<p class="p1"><span class="Apple-converted-space">        </span>base = os.path.join(os.getcwd(), "data")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if sys.platform == "darwin":</p>
+<p class="p1"><span class="Apple-converted-space">            </span>base = os.path.expanduser("~/Library/Application Support/MKK Investment Tracker")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>base = os.path.join(os.path.expanduser("~"), ".mkk_investment_tracker")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>os.makedirs(base, exist_ok=True)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return os.path.join(base, "portfolio_data.json")</p>
+<p class="p2"><br></p>
+<p class="p1">DATA_FILE = _data_path()</p>
+<p class="p2"><br></p>
+<p class="p1">def load_data() -&gt; Dict[str, Any]:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if not os.path.exists(DATA_FILE):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"holdings": {},</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"cash_uninvested": 0.0,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"settings": {"currency": "USD", "auto_price": True},</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"last_prices": {},</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"last_updated": None,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"version": APP_VERSION,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>with open(DATA_FILE, "r", encoding="utf-8") as f:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>d = json.load(f)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>d.setdefault("settings", {})</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d["settings"].setdefault("currency", "USD")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d["settings"].setdefault("auto_price", True)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d.setdefault("last_prices", {})</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d.setdefault("last_updated", None)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d.setdefault("cash_uninvested", 0.0)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d["version"] = APP_VERSION</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for rec in d.get("holdings", {}).values():</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rec.setdefault("purchase_price", None)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rec.setdefault("dividends_collected", 0.0)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rec.setdefault("last_div_amount", 0.0)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rec.setdefault("last_div_date", "")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rec.setdefault("summary", "")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return d</p>
+<p class="p2"><br></p>
+<p class="p1">def save_data(data: Dict[str, Any]) -&gt; None:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>with open(DATA_FILE, "w", encoding="utf-8") as f:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>json.dump(data, f, indent=2)</p>
+<p class="p2"><br></p>
+<p class="p1">DATA = load_data()</p>
+<p class="p2"><br></p>
+<p class="p1"># ---------------- Helpers ----------------</p>
+<p class="p1">def money_to_float(text: str) -&gt; float:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if text is None:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return 0.0</p>
+<p class="p1"><span class="Apple-converted-space">    </span>s = str(text).strip().replace(",", "").replace("$", "")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return float(s) if s else 0.0</p>
+<p class="p1"><span class="Apple-converted-space">    </span>except:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return 0.0</p>
+<p class="p2"><br></p>
+<p class="p1">def money_str(x: float) -&gt; str:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if x is None or not np.isfinite(x):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return ""</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return f"${x:,.2f}"</p>
+<p class="p2"><br></p>
+<p class="p1">def money_input(label: str, key: str, value: float = 0.0, help: str = "") -&gt; float:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.write(label)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>default = money_str(value)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>txt = st.text_input(</p>
+<p class="p1"><span class="Apple-converted-space">        </span>label="",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>value=default,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>key=key,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>help=help,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>label_visibility="collapsed",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>placeholder="$0.00",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return money_to_float(txt)</p>
+<p class="p2"><br></p>
+<p class="p1">def shares_to_float(text: str) -&gt; float:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if text is None:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return 0.0</p>
+<p class="p1"><span class="Apple-converted-space">    </span>s = str(text).strip().replace(",", "").replace("\\u00a0", "").strip()</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return float(s) if s else 0.0</p>
+<p class="p1"><span class="Apple-converted-space">    </span>except:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return 0.0</p>
+<p class="p2"><br></p>
+<p class="p1">def shares_input(</p>
+<p class="p1"><span class="Apple-converted-space">    </span>label: str,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>key: str,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>value: float = 0.0,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>help: str = "",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>placeholder: str = "0.000000",</p>
+<p class="p1">) -&gt; float:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.write(label)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>txt = st.text_input(</p>
+<p class="p1"><span class="Apple-converted-space">        </span>label="",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>value=f"{value:.6f}" if value else "",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>key=key,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>help=help,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>label_visibility="collapsed",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>placeholder=placeholder,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return shares_to_float(txt)</p>
+<p class="p2"><br></p>
+<p class="p1">@st.cache_data(show_spinner=False)</p>
+<p class="p1">def fetch_price(ticker: str) -&gt; float:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>t = yf.Ticker(ticker)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>hist = t.history(period="5d", interval="1d")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if hist is None or hist.empty:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return float("nan")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return float(hist["Close"].dropna().iloc[-1])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return float("nan")</p>
+<p class="p2"><br></p>
+<p class="p1">@st.cache_data(show_spinner=False)</p>
+<p class="p1">def fetch_name_and_summary(ticker: str):</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tk = yf.Ticker(ticker)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>info = tk.info or {}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>name = info.get("longName") or info.get("shortName") or info.get("symbol") or ticker</p>
+<p class="p1"><span class="Apple-converted-space">        </span>summary = info.get("longBusinessSummary") or info.get("description") or ""</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if summary:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>summary = (summary[:500] + "…") if len(summary) &gt; 500 else summary</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return name, summary</p>
+<p class="p1"><span class="Apple-converted-space">    </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return ticker, ""</p>
+<p class="p2"><br></p>
+<p class="p1">@st.cache_data(show_spinner=False)</p>
+<p class="p1">def fetch_dividend_frequency(ticker: str) -&gt; str:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>t = yf.Ticker(ticker)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>div = t.dividends</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if div is None or len(div) &lt; 3:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Irregular/None"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>dates = pd.to_datetime(div.index).sort_values()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>cutoff = pd.Timestamp.utcnow() - pd.Timedelta(days=3 * 365)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>dates = dates[dates &gt;= cutoff]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if len(dates) &lt; 3:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Irregular/None"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>diffs = (dates[1:] - dates[:-1]).days.values</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if len(diffs) == 0:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Irregular/None"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>med = float(np.median(diffs))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if med &lt;= 9:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Weekly"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if med &lt;= 45:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Monthly"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if med &lt;= 115:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Quarterly"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if med &lt;= 220:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Semiannual"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if med &lt;= 400:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return "Annual"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return "Irregular/None"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return "Irregular/None"</p>
+<p class="p2"><br></p>
+<p class="p1"># ---------------- Sidebar ----------------</p>
+<p class="p1">with st.sidebar:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("Settings")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.caption(f"Version: **{APP_VERSION}**")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if st.button("Clear cached prices"):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>fetch_price.clear()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>fetch_name_and_summary.clear()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>fetch_dividend_frequency.clear()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.success("Cleared cached data.")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>DATA["settings"]["currency"] = st.selectbox(</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Currency",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>["USD", "EUR", "GBP", "JPY", "CAD"],</p>
+<p class="p1"><span class="Apple-converted-space">        </span>index=["USD", "EUR", "GBP", "JPY", "CAD"].index(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>DATA["settings"].get("currency", "USD")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>),</p>
+<p class="p1"><span class="Apple-converted-space">    </span>)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>DATA["settings"]["auto_price"] = st.checkbox(</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Auto-update prices", value=DATA["settings"].get("auto_price", True)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if st.button("🔄 Update all prices now"):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>updated = 0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for tkr in DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>p = fetch_price(tkr)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if np.isfinite(p):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>DATA["last_prices"][tkr] = p</p>
+<p class="p1"><span class="Apple-converted-space">                </span>updated += 1</p>
+<p class="p1"><span class="Apple-converted-space">        </span>DATA["last_updated"] = datetime.now().isoformat(timespec="seconds")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.success(f"Updated {updated} tickers.")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if st.button("💾 Save data"):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.success("Saved.")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---------------- Tabs ----------------</p>
+<p class="p1">st.title("MKK Investment Tracker")</p>
+<p class="p1">tab_port, tab_add, tab_edit, tab_div, tab_trueada, tab_migrate, tab_backup = st.tabs(</p>
+<p class="p1"><span class="Apple-converted-space">    </span>["Portfolio", "Add Holding", "Edit Holdings", "Dividends", "True ADA", "Migration", "Backup"]</p>
+<p class="p1">)</p>
+<p class="p2"><br></p>
+<p class="p1">def stripe():</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return [{"selector": "tbody tr:nth-child(odd)", "props": "background-color: rgba(0,0,0,0.03);"}]</p>
+<p class="p2"><br></p>
+<p class="p1">def color_pos_neg(v):</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>x = float(str(v).replace("%", "").replace(",", "").replace("$", ""))</p>
+<p class="p1"><span class="Apple-converted-space">    </span>except:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return ""</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if not np.isfinite(x):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return ""</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if x &gt; 0:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return "color:#16a34a;"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if x &lt; 0:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return "color:#dc2626;"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return ""</p>
+<p class="p2"><br></p>
+<p class="p1">def money_fmt(v):</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return "" if pd.isna(v) else f"${float(v):,.2f}"</p>
+<p class="p2"><br></p>
+<p class="p1">def pct_fmt(v):</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return "" if pd.isna(v) else f"{float(v):,.2f}%"</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- Portfolio ----</p>
+<p class="p1">with tab_port:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if not DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.info("No holdings yet.")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rows = []</p>
+<p class="p1"><span class="Apple-converted-space">        </span>total_invested = 0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>total_value = 0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>total_div = 0.0</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>for tkr, rec in sorted(DATA["holdings"].items()):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>shares = float(rec.get("shares", 0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>invested = float(rec.get("total_invested", 0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>price = fetch_price(tkr) if DATA["settings"].get("auto_price", True) else float("nan")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if np.isnan(price):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>price = float(DATA["last_prices"].get(tkr, np.nan))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>mval = shares * price if np.isfinite(price) else np.nan</p>
+<p class="p1"><span class="Apple-converted-space">            </span>divs = float(rec.get("dividends_collected", 0.0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>overall = (mval - invested if np.isfinite(mval) else 0.0) + divs</p>
+<p class="p1"><span class="Apple-converted-space">            </span>ret_pct = (overall / invested * 100) if invested &gt; 0 else np.nan</p>
+<p class="p1"><span class="Apple-converted-space">            </span>payout = fetch_dividend_frequency(tkr)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>true_ada = ((invested - divs) / shares) if shares &gt; 0 else np.nan</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>rows.append(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>{</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Ticker": tkr,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Name": rec.get("name", ""),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Payout Freq": payout,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Shares": round(shares, 6),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Purchase Price": rec.get("purchase_price", np.nan),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Total Invested": invested,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Price Now": price,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Current Value": mval,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Dividends Collected": divs,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"True ADA": true_ada,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Overall Return $": overall,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Overall Return %": ret_pct,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>if np.isfinite(mval):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>total_value += mval</p>
+<p class="p1"><span class="Apple-converted-space">            </span>total_invested += invested</p>
+<p class="p1"><span class="Apple-converted-space">            </span>total_div += divs</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>order = [</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Ticker",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Name",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Payout Freq",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Shares",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Purchase Price",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Total Invested",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Price Now",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Current Value",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Dividends Collected",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"True ADA",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Overall Return $",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Overall Return %",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>df = pd.DataFrame(rows)[order]</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>money_cols = [</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Purchase Price",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Total Invested",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Price Now",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Current Value",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Dividends Collected",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"True ADA",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Overall Return $",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>pct_cols = ["Overall Return %"]</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>sty = (</p>
+<p class="p1"><span class="Apple-converted-space">            </span>df.style.format({**{c: money_fmt for c in money_cols}, **{c: pct_fmt for c in pct_cols}})</p>
+<p class="p1"><span class="Apple-converted-space">            </span>.applymap(color_pos_neg, subset=["Overall Return $", "Overall Return %"])</p>
+<p class="p1"><span class="Apple-converted-space">            </span>.set_properties(subset=money_cols + pct_cols, **{"text-align": "right"})</p>
+<p class="p1"><span class="Apple-converted-space">            </span>.set_table_styles(stripe())</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.dataframe(sty, use_container_width=True, height=600, hide_index=True)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>except TypeError:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.dataframe(sty.hide(axis="index"), use_container_width=True, height=600)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">                </span># Fallback: pre-format the DataFrame</p>
+<p class="p1"><span class="Apple-converted-space">                </span>df_display = df.copy()</p>
+<p class="p1"><span class="Apple-converted-space">                </span>for c in money_cols:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>df_display[c] = df_display[c].apply(money_fmt)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>for c in pct_cols:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>df_display[c] = df_display[c].apply(pct_fmt)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.dataframe(df_display, use_container_width=True, height=600)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>cash = float(DATA.get("cash_uninvested", 0))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>overall = (total_value - total_invested) + total_div</p>
+<p class="p1"><span class="Apple-converted-space">        </span>overall_pct = (overall / total_invested * 100) if total_invested &gt; 0 else np.nan</p>
+<p class="p1"><span class="Apple-converted-space">        </span>total_value_incl_cash = total_value + cash</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>c1, c2, c3, c4, c5 = st.columns(5)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c1.metric("Total Invested", money_str(total_invested))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c2.metric("Current Value (Holdings)", money_str(total_value))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c3.metric("Cash Available", money_str(cash))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c4.metric("Total Value (incl. Cash)", money_str(total_value_incl_cash))</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>color = (</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"#16a34a"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if (np.isfinite(overall) and overall &gt; 0)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>else ("#dc2626" if (np.isfinite(overall) and overall &lt; 0) else "#374151")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>pct_txt = f"{overall_pct:.2f}%" if np.isfinite(overall_pct) else "—"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c5.markdown(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>f"""</p>
+<p class="p1">&lt;div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div style="font-size:12px;color:#6b7280;"&gt;Overall Return&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div style="font-size:22px;font-weight:700;color:{color};"&gt;{money_str(overall)}&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div style="font-size:12px;color:#6b7280;"&gt;{pct_txt}&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p1">""",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>unsafe_allow_html=True,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.markdown("---")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.subheader("Cash Available")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>new_cash = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Cash Available",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>key="cash_available_main",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>value=float(DATA.get("cash_uninvested", 0.0)),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>help="This is included in Total Value (incl. Cash).",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if st.button("Save Cash Available"):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>DATA["cash_uninvested"] = float(new_cash)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.success("Cash Available saved.")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if DATA.get("last_updated"):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.caption(f"Last price update: {DATA['last_updated']}")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.markdown("---")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.subheader("Ticker Summaries")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for tkr, rec in sorted(DATA["holdings"].items()):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>with st.expander(f"{tkr} — {rec.get('name','')}"):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>summary = rec.get("summary", "")</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if not summary:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>nm, sm = fetch_name_and_summary(tkr)</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if not rec.get("name"):</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>rec["name"] = nm</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>rec["summary"] = sm</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>summary = sm</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if summary:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>st.write(summary)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>payout = fetch_dividend_frequency(tkr)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.markdown(f"- **Dividend Payout Frequency:** {payout}")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- Add Holding ----</p>
+<p class="p1">with tab_add:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("Add Holding")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>with st.form("add_form", clear_on_submit=True):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>col1, col2 = st.columns(2)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ticker = col1.text_input("Ticker", placeholder="AAPL").strip().upper()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>name = col2.text_input("Name (auto-fills if blank)", placeholder="Apple Inc.").strip()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>shares = shares_input(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Shares purchased",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>key="add_shares",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>help="Supports up to 6 decimals (e.g., 100.391000).",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>purchase_price = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Purchase price per share ($, optional)", key="add_purchase_price", value=0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>total_invested = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Total invested",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>key="add_total_invested",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>value=0.0,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>help="Include fees/commissions if applicable.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>dividends = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"Dividends collected so far", key="add_dividends", value=0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>submitted = st.form_submit_button("Add Holding")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if submitted:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if not ticker or shares &lt;= 0 or total_invested &lt;= 0:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.error("Please enter at least Ticker, Shares &gt; 0, and Total invested &gt; 0.")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>auto_name, auto_summary = (</p>
+<p class="p1"><span class="Apple-converted-space">                </span>fetch_name_and_summary(ticker) if not name else (name, "")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if ticker in DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.warning("Ticker already exists. Use Edit tab to modify existing holding.")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>DATA["holdings"][ticker] = {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"name": auto_name,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"shares": float(shares),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"total_invested": float(total_invested),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"purchase_price": float(purchase_price) if purchase_price &gt; 0 else None,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"dividends_collected": float(dividends),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"summary": auto_summary,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"last_div_amount": 0.0,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"last_div_date": "",</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"created": datetime.now().isoformat(timespec="seconds"),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.success(f"Added {ticker} — {auto_name}")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- Edit Holdings ----</p>
+<p class="p1">with tab_edit:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("Edit / Update Holdings")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if not DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.info("Nothing to edit yet.")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>all_tickers = sorted(list(DATA["holdings"].keys()))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sel = st.selectbox("Select ticker", options=all_tickers)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rec = DATA["holdings"][sel]</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>with st.form("edit_form"):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>name = st.text_input("Name", value=rec.get("name", ""))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>shares = shares_input(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"Shares",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>key=f"edit_shares_{sel}",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>value=float(rec.get("shares", 0)),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>help="Supports up to 6 decimals.",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>total_invested = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"Total invested",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>key=f"edit_total_invested_{sel}",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>value=float(rec.get("total_invested", 0)),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>purchase_price = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"Purchase price per share ($, optional)",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>key=f"edit_purchase_price_{sel}",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>value=float(rec.get("purchase_price") or 0.0),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>dividends = money_input(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"Dividends collected so far",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>key=f"edit_div_{sel}",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>value=float(rec.get("dividends_collected", 0.0)),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>summary = st.text_area(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"Summary (auto-fetched; you can edit)",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>value=rec.get("summary", ""),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>height=120,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>save_btn = st.form_submit_button("Save changes")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if save_btn:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>DATA["holdings"][sel] = {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>**rec,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"name": name,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"shares": float(shares),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"total_invested": float(total_invested),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"purchase_price": float(purchase_price) if purchase_price &gt; 0 else None,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"dividends_collected": float(dividends),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"summary": summary,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>"updated": datetime.now().isoformat(timespec="seconds"),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.success(f"Updated {sel}.")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>with st.expander("🗑️ Delete Holding"):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.caption("This permanently removes the selected holding from your portfolio data.")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>col_a, col_b = st.columns([1, 1])</p>
+<p class="p1"><span class="Apple-converted-space">            </span>confirm = col_a.checkbox(f"Yes, delete {sel}")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if col_b.button("Delete Holding", disabled=not confirm, type="secondary"):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>del DATA["holdings"][sel]</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>st.success(f"Deleted {sel}. Refreshing…")</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>st.rerun()</p>
+<p class="p1"><span class="Apple-converted-space">                </span>except KeyError:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>st.error("Ticker not found.")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- Dividends ----</p>
+<p class="p1">with tab_div:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("Quick Dividend Entry (with last amount &amp; date)")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if not DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.info("Add a holding first.")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tickers = sorted(list(DATA["holdings"].keys()))</p>
+<p class="p1"><span class="Apple-converted-space">        </span>col1, col2, col3, col4 = st.columns([1, 1, 1, 1])</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sel = col1.selectbox("Ticker", options=tickers)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>dflt_date = date.today()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>dt = col2.date_input("Dividend date", value=dflt_date, key=f"div_date_{sel}")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>amt = col3.text_input("Dividend amount to add", value="$0.00", key=f"div_amt_{sel}")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>def _money_to_float(s):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>s = str(s).strip().replace(",", "").replace("$", "")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return float(s) if s else 0.0</p>
+<p class="p1"><span class="Apple-converted-space">            </span>except:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return 0.0</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if col4.button("Add dividend"):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>add_val = _money_to_float(amt)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>DATA["holdings"][sel]["dividends_collected"] = float(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>DATA["holdings"][sel].get("dividends_collected", 0.0)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>) + add_val</p>
+<p class="p1"><span class="Apple-converted-space">            </span>DATA["holdings"][sel]["last_div_amount"] = add_val</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>DATA["holdings"][sel]["last_div_date"] = dt.isoformat()</p>
+<p class="p1"><span class="Apple-converted-space">            </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>DATA["holdings"][sel]["last_div_date"] = str(dt)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.success(f"Added {money_str(add_val)} dividend to {sel} for {dt}.")</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>rows = []</p>
+<p class="p1"><span class="Apple-converted-space">        </span>total = 0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for tkr, rec in sorted(DATA["holdings"].items()):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>d = float(rec.get("dividends_collected", 0.0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>last_amt = float(rec.get("last_div_amount", 0.0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>last_dt = rec.get("last_div_date", "")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>rows.append(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>{</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Ticker": tkr,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Dividends Collected": d,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Last Dividend $": last_amt,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Last Dividend Date": last_dt,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>total += d</p>
+<p class="p1"><span class="Apple-converted-space">        </span>df_div = pd.DataFrame(rows).reset_index(drop=True)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>df_div["Dividends Collected"] = df_div["Dividends Collected"].apply(lambda v: f"${float(v):,.2f}")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>df_div["Last Dividend $"] = df_div["Last Dividend $"].apply(lambda v: f"${float(v):,.2f}" if v else "")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.dataframe(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>df_div.style.set_table_styles(stripe()),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>use_container_width=True,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>height=360,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>hide_index=True,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>except TypeError:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.dataframe(</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>df_div.style.hide(axis="index").set_table_styles(stripe()),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>use_container_width=True,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>height=360,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.dataframe(df_div, use_container_width=True, height=360)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.metric("Total Dividends Collected", money_str(total))</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- True ADA ----</p>
+<p class="p1">with tab_trueada:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("True Adjusted Dividend Average (True ADA)")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if not DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.info("Add a holding first to calculate True ADA.")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rows = []</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sum_shares = 0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sum_invested = 0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sum_div = 0.0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for tkr, rec in sorted(DATA["holdings"].items()):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>shares = float(rec.get("shares", 0.0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>invested = float(rec.get("total_invested", 0.0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>divs = float(rec.get("dividends_collected", 0.0))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>true_ada = (invested - divs) / shares if shares &gt; 0 else np.nan</p>
+<p class="p1"><span class="Apple-converted-space">            </span>price = fetch_price(tkr) if DATA["settings"].get("auto_price", True) else float("nan")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if np.isnan(price):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>price = float(DATA["last_prices"].get(tkr, np.nan))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>vs_true_pct = (</p>
+<p class="p1"><span class="Apple-converted-space">                </span>(price - true_ada) / true_ada * 100.0</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (shares &gt; 0 and np.isfinite(price) and np.isfinite(true_ada) and true_ada != 0)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>else np.nan</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>rows.append(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>{</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Ticker": tkr,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Shares": round(shares, 6),</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Total Invested": invested,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Dividends Collected": divs,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"True ADA": true_ada,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Current Price": price if np.isfinite(price) else np.nan,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>"Return vs True ADA %": vs_true_pct,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>sum_shares += shares</p>
+<p class="p1"><span class="Apple-converted-space">            </span>sum_invested += invested</p>
+<p class="p1"><span class="Apple-converted-space">            </span>sum_div += divs</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>df = pd.DataFrame(rows)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>df_disp = df.copy()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for c in ["Total Invested", "Dividends Collected", "True ADA", "Current Price"]:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>df_disp[c] = df_disp[c].apply(lambda v: "" if pd.isna(v) else f"${float(v):,.2f}")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>df_disp["Return vs True ADA %"] = df_disp["Return vs True ADA %"].apply(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>lambda v: "" if pd.isna(v) else f"{float(v):,.2f}%"</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>def color_pct(v):</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>x = float(str(v).replace("%", ""))</p>
+<p class="p1"><span class="Apple-converted-space">            </span>except:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return ""</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if not np.isfinite(x):</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return ""</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if x &gt; 0:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return "color:#16a34a;"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if x &lt; 0:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return "color:#dc2626;"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return ""</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>sty = (</p>
+<p class="p1"><span class="Apple-converted-space">                </span>df_disp.style.applymap(color_pct, subset=["Return vs True ADA %"])</p>
+<p class="p1"><span class="Apple-converted-space">                </span>.set_properties(</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>subset=["Total Invested", "Dividends Collected", "True ADA", "Current Price", "Return vs True ADA %"],</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>**{"text-align": "right"},</p>
+<p class="p1"><span class="Apple-converted-space">                </span>)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>.set_table_styles(stripe())</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.dataframe(sty, use_container_width=True, height=520, hide_index=True)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>except TypeError:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.dataframe(sty.hide(axis="index"), use_container_width=True, height=520)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>except Exception:</p>
+<p class="p1"><span class="Apple-converted-space">                </span>st.dataframe(df_disp, use_container_width=True, height=520)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if sum_shares &gt; 0:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>avg_cost_portfolio = (sum_invested / sum_shares)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>true_ada_portfolio = ((sum_invested - sum_div) / sum_shares)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>improvement_pct = ((avg_cost_portfolio - true_ada_portfolio) / avg_cost_portfolio * 100.0) if avg_cost_portfolio &gt; 0 else np.nan</p>
+<p class="p1"><span class="Apple-converted-space">        </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>avg_cost_portfolio = np.nan</p>
+<p class="p1"><span class="Apple-converted-space">            </span>true_ada_portfolio = np.nan</p>
+<p class="p1"><span class="Apple-converted-space">            </span>improvement_pct = np.nan</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>c1, c2, c3, c4 = st.columns(4)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c1.metric("Total Dividends Collected", f"${sum_div:,.2f}")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c2.metric("Unadjusted Avg Cost (Portfolio)", f"${avg_cost_portfolio:,.2f}" if np.isfinite(avg_cost_portfolio) else "—")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c3.metric("True ADA (Portfolio)", f"${true_ada_portfolio:,.2f}" if np.isfinite(true_ada_portfolio) else "—")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>c4.metric("Adjusted Basis Improvement", f"{improvement_pct:.2f}%" if np.isfinite(improvement_pct) else "—")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- Migration ----</p>
+<p class="p1">with tab_migrate:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("Migrate from older version")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.caption("Import/merge a previous `portfolio_data.json` without losing your data.")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>upl = st.file_uploader("Choose previous JSON file", type=["json"])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>merge_mode = st.radio("Merge strategy", ["Add new tickers only", "Overwrite existing tickers with incoming data"])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if upl is not None and st.button("Merge now"):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>incoming = json.load(upl)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>inc_holdings = incoming.get("holdings", {})</p>
+<p class="p1"><span class="Apple-converted-space">            </span>added = 0</p>
+<p class="p1"><span class="Apple-converted-space">            </span>updated = 0</p>
+<p class="p1"><span class="Apple-converted-space">            </span>for tkr, rec in inc_holdings.items():</p>
+<p class="p1"><span class="Apple-converted-space">                </span>rec.setdefault("last_div_amount", 0.0)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>rec.setdefault("last_div_date", "")</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if tkr not in DATA["holdings"]:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>DATA["holdings"][tkr] = rec</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>added += 1</p>
+<p class="p1"><span class="Apple-converted-space">                </span>else:</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if merge_mode.startswith("Overwrite"):</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>DATA["holdings"][tkr] = rec</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>updated += 1</p>
+<p class="p1"><span class="Apple-converted-space">            </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.success(f"Merged successfully. Added: {added}, Updated: {updated}.")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>except Exception as e:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.error(f"Failed to merge: {e}")</p>
+<p class="p2"><br></p>
+<p class="p1"># ---- Backup ----</p>
+<p class="p1">with tab_backup:</p>
+<p class="p1"><span class="Apple-converted-space">    </span>st.subheader("Backup &amp; Restore")</p>
+<p class="p1"><span class="Apple-converted-space">    </span>with open(DATA_FILE, "rb") as f:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>st.download_button(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"⬇️ Download backup (JSON)",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>data=f,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>file_name=f"portfolio_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>mime="application/json",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>upl = st.file_uploader("Restore from JSON backup", type=["json"])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if upl is not None and st.button("Restore now"):</p>
+<p class="p1"><span class="Apple-converted-space">        </span>try:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>DATA = json.load(upl)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>for rec in DATA.get("holdings", {}).values():</p>
+<p class="p1"><span class="Apple-converted-space">                </span>rec.setdefault("last_div_amount", 0.0)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>rec.setdefault("last_div_date", "")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>save_data(DATA)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.success("Backup restored. Reloading…")</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.rerun()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>except Exception as e:</p>
+<p class="p1"><span class="Apple-converted-space">            </span>st.error(f"Failed to restore: {e}")</p>
+<p class="p1">`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "Start MKK Investment Tracker.command",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/x-sh",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`#!/bin/bash</p>
+<p class="p1">set -e</p>
+<p class="p1">cd "$(dirname "$0")"</p>
+<p class="p1">if [ ! -d ".venv" ]; then</p>
+<p class="p1"><span class="Apple-converted-space">  </span>/usr/bin/python3 -m venv .venv</p>
+<p class="p1"><span class="Apple-converted-space">  </span>source .venv/bin/activate</p>
+<p class="p1"><span class="Apple-converted-space">  </span>python -m pip install --upgrade pip</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pip install streamlit yfinance pandas numpy altair pydeck watchdog tornado packaging requests pytz</p>
+<p class="p1">else</p>
+<p class="p1"><span class="Apple-converted-space">  </span>source .venv/bin/activate</p>
+<p class="p1">fi</p>
+<p class="p1">exec streamlit run "tracker_app.py"`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "portfolio_data.json",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "application/json",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"holdings": {},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"cash_uninvested": 0.0,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"settings": { "currency": "USD", "auto_price": true },</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"last_prices": {},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"last_updated": null,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"version": "1.8.9c"</p>
+<p class="p1">}`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "README.txt",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/plain",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`MKK Investment Tracker – v1.8.9c</p>
+<p class="p2"><br></p>
+<p class="p1">Usage:</p>
+<p class="p1">1) Double-click “Start MKK Investment Tracker.command”</p>
+<p class="p1">2) App launches in your browser (Streamlit)</p>
+<p class="p1">3) Data is saved at:</p>
+<p class="p1"><span class="Apple-converted-space">   </span>- macOS: ~/Library/Application Support/MKK Investment Tracker/portfolio_data.json</p>
+<p class="p1"><span class="Apple-converted-space">   </span>- Streamlit Cloud: ./data/portfolio_data.json (container)</p>
+<p class="p2"><br></p>
+<p class="p1">Features:</p>
+<p class="p1">- Color-coded Overall Return ($/%)</p>
+<p class="p1">- True ADA view with color-coded % vs True ADA</p>
+<p class="p1">- Subtle row striping in tables</p>
+<p class="p1">- Dividend quick entry (amount + date)</p>
+<p class="p1">- Delete Holding, Migration, Backup/Restore`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "requirements.txt",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/plain",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`streamlit&gt;=1.33</p>
+<p class="p1">yfinance&gt;=0.2.40</p>
+<p class="p1">pandas&gt;=2.2</p>
+<p class="p1">numpy&gt;=1.26</p>
+<p class="p1">altair&gt;=5.3</p>
+<p class="p1">pydeck&gt;=0.9</p>
+<p class="p1">watchdog&gt;=4.0</p>
+<p class="p1">packaging&gt;=24.0</p>
+<p class="p1">requests&gt;=2.31</p>
+<p class="p1">pytz&gt;=2024.1`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "runtime.txt",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/plain",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: "3.11\n"</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: ".streamlit/config.toml",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/plain",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`[theme]</p>
+<p class="p1">base="light"</p>
+<p class="p1">primaryColor="#1f6feb"</p>
+<p class="p1">backgroundColor="#ffffff"</p>
+<p class="p1">secondaryBackgroundColor="#f6f8fa"</p>
+<p class="p1">textColor="#111827"`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: ".gitignore",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/plain",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`__pycache__/</p>
+<p class="p1">*.pyc</p>
+<p class="p1">.venv/</p>
+<p class="p1">env/</p>
+<p class="p1">.DS_Store</p>
+<p class="p1">.streamlit/secrets.toml`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>name: "build_mkk_dmg.sh",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mime: "text/x-sh",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>content: String.raw`#!/bin/bash</p>
+<p class="p1">set -euo pipefail</p>
+<p class="p2"><br></p>
+<p class="p1">APP_NAME="MKK Investment Tracker"</p>
+<p class="p1">BUNDLE_ID="com.mkk.investmenttracker"</p>
+<p class="p1">VERSION="${1:-1.8.9}"</p>
+<p class="p2"><br></p>
+<p class="p1"># 1) Dependencies</p>
+<p class="p1">if ! command -v platypus &gt;/dev/null 2&gt;&amp;1; then</p>
+<p class="p1"><span class="Apple-converted-space">  </span>echo "Platypus not found. Installing via Homebrew..."</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if ! command -v brew &gt;/dev/null 2&gt;&amp;1; then</p>
+<p class="p1"><span class="Apple-converted-space">    </span>echo "Homebrew is required. Install from https://brew.sh"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>exit 1</p>
+<p class="p1"><span class="Apple-converted-space">  </span>fi</p>
+<p class="p1"><span class="Apple-converted-space">  </span>brew install --cask platypus</p>
+<p class="p1">fi</p>
+<p class="p2"><br></p>
+<p class="p1"># 2) Check hdiutil (macOS built-in)</p>
+<p class="p1">if ! command -v hdiutil &gt;/dev/null 2&gt;&amp;1; then</p>
+<p class="p1"><span class="Apple-converted-space">  </span>echo "hdiutil not found; must run on macOS."</p>
+<p class="p1"><span class="Apple-converted-space">  </span>exit 1</p>
+<p class="p1">fi</p>
+<p class="p2"><br></p>
+<p class="p1"># 3) Build icon.icns from icon.png</p>
+<p class="p1">ICON_PNG="icon.png"</p>
+<p class="p1">if [ ! -f "$ICON_PNG" ]; then echo "Missing icon.png"; exit 1; fi</p>
+<p class="p2"><br></p>
+<p class="p1">echo "Generating icon.icns..."</p>
+<p class="p1">rm -rf icon.iconset icon.icns</p>
+<p class="p1">mkdir icon.iconset</p>
+<p class="p1">sips -z 16 16 <span class="Apple-converted-space">    </span>"$ICON_PNG" --out icon.iconset/icon_16x16.png &gt;/dev/null</p>
+<p class="p1">sips -z 32 32 <span class="Apple-converted-space">    </span>"$ICON_PNG" --out icon.iconset/icon_16x16@2x.png &gt;/dev/null</p>
+<p class="p1">sips -z 32 32 <span class="Apple-converted-space">    </span>"$ICON_PNG" --out icon.iconset/icon_32x32.png &gt;/dev/null</p>
+<p class="p1">sips -z 64 64 <span class="Apple-converted-space">    </span>"$ICON_PNG" --out icon.iconset/icon_32x32@2x.png &gt;/dev/null</p>
+<p class="p1">sips -z 128 128 <span class="Apple-converted-space">  </span>"$ICON_PNG" --out icon.iconset/icon_128x128.png &gt;/dev/null</p>
+<p class="p1">sips -z 256 256 <span class="Apple-converted-space">  </span>"$ICON_PNG" --out icon.iconset/icon_128x128@2x.png &gt;/dev/null</p>
+<p class="p1">sips -z 256 256 <span class="Apple-converted-space">  </span>"$ICON_PNG" --out icon.iconset/icon_256x256.png &gt;/dev/null</p>
+<p class="p1">sips -z 512 512 <span class="Apple-converted-space">  </span>"$ICON_PNG" --out icon.iconset/icon_256x256@2x.png &gt;/dev/null</p>
+<p class="p1">sips -z 512 512 <span class="Apple-converted-space">  </span>"$ICON_PNG" --out icon.iconset/icon_512x512.png &gt;/dev/null</p>
+<p class="p1">cp "$ICON_PNG" icon.iconset/icon_512x512@2x.png</p>
+<p class="p1">iconutil -c icns icon.iconset -o icon.icns</p>
+<p class="p2"><br></p>
+<p class="p1"># 4) Ensure launcher is executable</p>
+<p class="p1">chmod +x "MKK_Payload/Start MKK Investment Tracker.command"</p>
+<p class="p2"><br></p>
+<p class="p1"># 5) Build .app with Platypus</p>
+<p class="p1">APP_BUNDLE="${APP_NAME}.app"</p>
+<p class="p1">rm -rf "$APP_BUNDLE"</p>
+<p class="p1">platypus -y \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-a "$APP_NAME" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-o "None" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-p "/bin/bash" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-V "$VERSION" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-I "$BUNDLE_ID" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-i icon.icns \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-f "MKK_Payload/tracker_app.py" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-f "MKK_Payload/portfolio_data.json" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-f "MKK_Payload/README.txt" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-R "MKK_Payload/Start MKK Investment Tracker.command" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"MKK_Payload/Start MKK Investment Tracker.command" \</p>
+<p class="p1"><span class="Apple-converted-space">  </span>"$APP_BUNDLE"</p>
+<p class="p2"><br></p>
+<p class="p1"># 6) Create DMG</p>
+<p class="p1">DMG_NAME="${APP_NAME// /_}_${VERSION}.dmg"</p>
+<p class="p1">rm -f "$DMG_NAME"</p>
+<p class="p1">WORKDIR="$(mktemp -d)"</p>
+<p class="p1">mkdir -p "$WORKDIR/mount"</p>
+<p class="p1">cp -R "$APP_BUNDLE" "$WORKDIR/mount/"</p>
+<p class="p1">ln -s /Applications "$WORKDIR/mount/Applications"</p>
+<p class="p1">hdiutil create "$DMG_NAME" -volname "$APP_NAME" -srcfolder "$WORKDIR/mount" -ov -format UDZO &gt;/dev/null</p>
+<p class="p1">rm -rf "$WORKDIR"</p>
+<p class="p2"><br></p>
+<p class="p1">echo "DMG created: $DMG_NAME"`</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">];</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- UI rendering ---------- */</p>
+<p class="p2"><br></p>
+<p class="p1">function createFileCard(file){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const wrap = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>wrap.className = 'file';</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const head = document.createElement('header');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const h2 = document.createElement('h2');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h2.textContent = file.name;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const btns = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const btn = document.createElement('button');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>btn.className = 'btn';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>btn.textContent = 'Download';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>btn.onclick = () =&gt; download(file.name, file.content, file.mime);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>btns.appendChild(btn);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>head.appendChild(h2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>head.appendChild(btns);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const pre = document.createElement('pre');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pre.className = 'code';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const code = document.createElement('code');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>code.textContent = file.content;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pre.appendChild(code);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>wrap.appendChild(head);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>wrap.appendChild(pre);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return wrap;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function download(filename, content, mime='text/plain'){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const blob = new Blob([content], {type: mime});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const url = URL.createObjectURL(blob);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const a = document.createElement('a');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>a.href = url;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>a.download = filename;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.body.appendChild(a);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>a.click();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(() =&gt; { URL.revokeObjectURL(url); a.remove(); }, 0);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function downloadAll(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>FILES.forEach(f =&gt; download(f.name, f.content, f.mime));</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">const container = document.getElementById('files');</p>
+<p class="p1">FILES.forEach(f =&gt; container.appendChild(createFileCard(f)));</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
